@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mon bar">
+<meta name="theme-color" content="#17141C">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<title>Mon bar</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: #17141C; color: #EDE6DA; font-family: Georgia, 'Times New Roman', serif; }
+  .ui { font-family: -apple-system, Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 50px); }
+  .eyebrow { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #C9A050; margin-bottom: 6px; }
+  h1 { font-size: 26px; font-weight: 400; margin: 0 0 6px; line-height: 1.15; }
+  .sub { font-size: 13px; color: #9C93A8; margin: 0 0 26px; }
+  .cat-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #9C93A8; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .chip { font-size: 13px; padding: 8px 13px; border-radius: 999px; border: 1px solid #3A3346; background: transparent; color: #B8AFC7; cursor: pointer; }
+  .chip.on { border-color: #C9A050; background: rgba(201,160,80,0.15); color: #E8C77A; }
+  .divider { height: 1px; background: #2A2433; margin: 4px 0 24px; }
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  #search { flex: 1; font-size: 14px; padding: 10px 12px; border-radius: 8px; border: 1px solid #3A3346; background: #211C2B; color: #EDE6DA; outline: none; }
+  .filter-lbl { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #9C93A8; white-space: nowrap; }
+  .card { border: 1px solid #2A2433; background: #1D1926; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+  .card.ready { border-color: #4A3F2A; background: rgba(201,160,80,0.06); }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .card-head h3 { margin: 0; font-size: 17px; font-weight: 400; }
+  .status { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #6E647F; white-space: nowrap; }
+  .status.ready { color: #E8C77A; }
+  .glass { font-size: 12px; color: #8D839E; margin: 4px 0 10px; }
+  .steps { font-size: 13px; color: #B8AFC7; margin: 0 0 10px; line-height: 1.5; }
+  .missing { font-size: 12px; color: #C9A050; margin: 0 0 10px; }
+  .stars { display: flex; gap: 4px; }
+  .stars button { background: none; border: none; padding: 3px; cursor: pointer; }
+  .empty { text-align: center; color: #6E647F; font-size: 13px; padding: 30px 0; }
+</style>
+</head>
+<body>
+<div class="wrap ui">
+  <div class="eyebrow">Mon bar</div>
+  <h1 class="voice">Ce que vous pouvez servir ce soir</h1>
+  <p class="sub" id="count-line"></p>
+
+  <div id="categories"></div>
+
+  <div class="divider"></div>
+
+  <div class="toolbar">
+    <input id="search" placeholder="Chercher un cocktail">
+    <label class="filter-lbl"><input type="checkbox" id="only-makeable"> Réalisables</label>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<script>
+const CATEGORIES = [
+  { name: "Spiritueux", items: ["Vodka","Gin","Rhum blanc","Rhum ambré","Tequila","Whisky","Cognac"] },
+  { name: "Liqueurs & vins", items: ["Triple sec","Vermouth rouge","Vermouth sec","Amaretto","Crème de menthe","Champagne / prosecco"] },
+  { name: "Mixers & jus", items: ["Jus de citron","Jus de citron vert","Jus d'orange","Jus de cranberry","Soda / eau gazeuse","Tonic","Ginger beer","Sirop de sucre","Sirop de grenadine","Angostura bitters","Menthe fraîche","Coca"] }
+];
+
+const COCKTAILS = [
+  { name:"Mojito", glass:"Verre long", ingredients:["Rhum blanc","Jus de citron vert","Sirop de sucre","Menthe fraîche","Soda / eau gazeuse"], steps:"Piler la menthe avec le sucre et le citron vert, ajouter le rhum, compléter au soda, glace pilée." },
+  { name:"Daiquiri", glass:"Verre à cocktail", ingredients:["Rhum blanc","Jus de citron vert","Sirop de sucre"], steps:"Shaker tous les ingrédients avec de la glace, filtrer dans un verre glacé." },
+  { name:"Gin Tonic", glass:"Verre ballon", ingredients:["Gin","Tonic"], steps:"Verser le gin sur glaçons, compléter au tonic, garnir d'un zeste." },
+  { name:"Whisky Sour", glass:"Verre old fashioned", ingredients:["Whisky","Jus de citron","Sirop de sucre"], steps:"Shaker avec glace, filtrer sur glaçons frais." },
+  { name:"Margarita", glass:"Verre à cocktail", ingredients:["Tequila","Triple sec","Jus de citron vert"], steps:"Shaker avec glace, servir dans un verre au bord salé." },
+  { name:"Cosmopolitan", glass:"Verre à cocktail", ingredients:["Vodka","Triple sec","Jus de citron vert","Jus de cranberry"], steps:"Shaker avec glace, filtrer dans un verre glacé." },
+  { name:"Moscow Mule", glass:"Mug en cuivre", ingredients:["Vodka","Jus de citron vert","Ginger beer"], steps:"Verser sur glace, compléter au ginger beer, garnir de citron vert." },
+  { name:"Screwdriver", glass:"Verre long", ingredients:["Vodka","Jus d'orange"], steps:"Verser sur glaçons, mélanger." },
+  { name:"Cuba Libre", glass:"Verre long", ingredients:["Rhum ambré","Coca","Jus de citron vert"], steps:"Verser sur glace, compléter au coca, un trait de citron vert." },
+  { name:"Old Fashioned", glass:"Verre old fashioned", ingredients:["Whisky","Sirop de sucre","Angostura bitters"], steps:"Diluer le sucre avec les bitters, ajouter le whisky et un gros glaçon." },
+  { name:"Negroni", glass:"Verre old fashioned", ingredients:["Gin","Vermouth rouge","Triple sec"], steps:"À défaut de Campari : verser à parts égales sur glace, mélanger, zeste d'orange." },
+  { name:"Americano", glass:"Verre old fashioned", ingredients:["Vermouth rouge","Soda / eau gazeuse"], steps:"Verser sur glace, compléter au soda, zeste d'orange." },
+  { name:"Tequila Sunrise", glass:"Verre long", ingredients:["Tequila","Jus d'orange","Sirop de grenadine"], steps:"Verser tequila et jus d'orange sur glace, faire couler la grenadine au fond." },
+  { name:"Amaretto Sour", glass:"Verre old fashioned", ingredients:["Amaretto","Jus de citron","Sirop de sucre"], steps:"Shaker avec glace, filtrer sur glaçons frais." },
+  { name:"French 75", glass:"Flûte", ingredients:["Gin","Jus de citron","Sirop de sucre","Champagne / prosecco"], steps:"Shaker gin, citron, sucre avec glace, filtrer en flûte, compléter au champagne." },
+  { name:"Kir Royal", glass:"Flûte", ingredients:["Champagne / prosecco","Sirop de grenadine"], steps:"Verser un trait de crème de cassis (ou grenadine) puis compléter au champagne." },
+  { name:"Grasshopper", glass:"Verre à cocktail", ingredients:["Crème de menthe","Amaretto"], steps:"Shaker avec glace, filtrer. Version simplifiée sans crème fraîche." },
+  { name:"Dark 'n' Stormy", glass:"Verre long", ingredients:["Rhum ambré","Ginger beer","Jus de citron vert"], steps:"Verser le rhum sur glace, compléter au ginger beer, un trait de citron vert." },
+  { name:"Vodka Cranberry", glass:"Verre long", ingredients:["Vodka","Jus de cranberry"], steps:"Verser sur glaçons, mélanger, garnir de citron vert." },
+  { name:"Sidecar", glass:"Verre à cocktail", ingredients:["Cognac","Triple sec","Jus de citron"], steps:"Shaker avec glace, filtrer dans un verre au bord sucré." }
+];
+
+const STAR_FULL = "★", STAR_EMPTY = "☆";
+let owned = new Set(JSON.parse(localStorage.getItem("mon-bar-inventory") || "[]"));
+let ratings = JSON.parse(localStorage.getItem("mon-bar-ratings") || "{}");
+let query = "";
+let onlyMakeable = false;
+
+function save() {
+  localStorage.setItem("mon-bar-inventory", JSON.stringify([...owned]));
+  localStorage.setItem("mon-bar-ratings", JSON.stringify(ratings));
+}
+
+function renderCategories() {
+  const el = document.getElementById("categories");
+  el.innerHTML = CATEGORIES.map(cat => `
+    <div class="cat-label">${cat.name}</div>
+    <div class="chips">
+      ${cat.items.map(item => `<button class="chip ${owned.has(item) ? "on" : ""}" data-item="${item}">${owned.has(item) ? "✓ " : ""}${item}</button>`).join("")}
+    </div>
+  `).join("");
+  el.querySelectorAll(".chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const item = btn.dataset.item;
+      owned.has(item) ? owned.delete(item) : owned.add(item);
+      save();
+      renderCategories();
+      renderList();
+    });
+  });
+}
+
+function renderList() {
+  const scored = COCKTAILS.map(c => {
+    const missing = c.ingredients.filter(i => !owned.has(i));
+    return { ...c, missing, makeable: missing.length === 0 };
+  })
+  .filter(c => onlyMakeable ? c.makeable : true)
+  .filter(c => c.name.toLowerCase().includes(query.toLowerCase()))
+  .sort((a, b) => a.missing.length - b.missing.length || a.name.localeCompare(b.name));
+
+  const makeableCount = COCKTAILS.filter(c => c.ingredients.every(i => owned.has(i))).length;
+  document.getElementById("count-line").textContent =
+    `${makeableCount} cocktail${makeableCount !== 1 ? "s" : ""} réalisable${makeableCount !== 1 ? "s" : ""} avec votre bar actuel`;
+
+  const list = document.getElementById("list");
+  if (scored.length === 0) {
+    list.innerHTML = `<div class="empty">Aucun cocktail ne correspond.</div>`;
+    return;
+  }
+  list.innerHTML = scored.map(c => {
+    const r = ratings[c.name] || 0;
+    return `
+    <div class="card ${c.makeable ? "ready" : ""}">
+      <div class="card-head">
+        <h3 class="voice">${c.name}</h3>
+        <span class="status ${c.makeable ? "ready" : ""}">${c.makeable ? "Prêt" : c.missing.length === 1 ? "1 ingrédient manquant" : c.missing.length + " ingrédients manquants"}</span>
+      </div>
+      <div class="glass">${c.glass}</div>
+      <div class="steps">${c.steps}</div>
+      ${!c.makeable ? `<div class="missing">Manque : ${c.missing.join(", ")}</div>` : ""}
+      <div class="stars" data-name="${c.name}">
+        ${[1,2,3,4,5].map(n => `<button data-n="${n}">${n <= r ? STAR_FULL : STAR_EMPTY}</button>`).join("")}
+      </div>
+    </div>`;
+  }).join("");
+
+  list.querySelectorAll(".stars").forEach(starsEl => {
+    const name = starsEl.dataset.name;
+    starsEl.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const n = parseInt(btn.dataset.n, 10);
+        ratings[name] = ratings[name] === n ? 0 : n;
+        save();
+        renderList();
+      });
+    });
+  });
+}
+
+document.getElementById("search").addEventListener("input", (e) => {
+  query = e.target.value;
+  renderList();
+});
+document.getElementById("only-makeable").addEventListener("change", (e) => {
+  onlyMakeable = e.target.checked;
+  renderList();
+});
+
+renderCategories();
+renderList();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
