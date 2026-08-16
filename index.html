@@ -32,9 +32,16 @@
   .card-head h3 { margin: 0; font-size: 17px; font-weight: 400; }
   .status { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #6E647F; white-space: nowrap; }
   .status.ready { color: #E8C77A; }
-  .glass { font-size: 12px; color: #8D839E; margin: 4px 0 10px; }
+  .glass { font-size: 12px; color: #8D839E; margin: 4px 0 12px; }
+  .ing-list { list-style: none; margin: 0 0 10px; padding: 0; }
+  .ing-list li { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; color: #B8AFC7; border-bottom: 1px solid #241F2E; }
+  .ing-list li:last-child { border-bottom: none; }
+  .ing-list li.miss { color: #6E647F; }
+  .ing-name { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #C9A050; flex-shrink: 0; }
+  .dot.off { background: #4A4155; }
+  .ing-qty { color: #8D839E; }
   .steps { font-size: 13px; color: #B8AFC7; margin: 0 0 10px; line-height: 1.5; }
-  .missing { font-size: 12px; color: #C9A050; margin: 0 0 10px; }
   .stars { display: flex; gap: 4px; }
   .stars button { background: none; border: none; padding: 3px; cursor: pointer; }
   .empty { text-align: center; color: #6E647F; font-size: 13px; padding: 30px 0; }
@@ -60,32 +67,58 @@
 
 <script>
 const CATEGORIES = [
-  { name: "Spiritueux", items: ["Vodka","Gin","Rhum blanc","Rhum ambré","Tequila","Whisky","Cognac"] },
-  { name: "Liqueurs & vins", items: ["Triple sec","Vermouth rouge","Vermouth sec","Amaretto","Crème de menthe","Champagne / prosecco"] },
-  { name: "Mixers & jus", items: ["Jus de citron","Jus de citron vert","Jus d'orange","Jus de cranberry","Soda / eau gazeuse","Tonic","Ginger beer","Sirop de sucre","Sirop de grenadine","Angostura bitters","Menthe fraîche","Coca"] }
+  { name: "Spiritueux", items: ["Vodka","Gin","Rhum blanc","Rhum ambré","Tequila","Whisky","Cognac","Pastis"] },
+  { name: "Liqueurs & vins", items: ["Triple sec","Vermouth rouge","Vermouth sec","Amaretto","Crème de menthe","Champagne / prosecco","Vin blanc sec","Campari","Aperol","Crème de cassis","Kahlua","Baileys"] },
+  { name: "Mixers & jus", items: ["Jus de citron","Jus de citron vert","Jus d'orange","Jus de cranberry","Jus de pamplemousse","Jus d'ananas","Crème de coco","Soda / eau gazeuse","Tonic","Ginger beer","Sirop de sucre","Sirop de grenadine","Angostura bitters","Menthe fraîche","Coca","Lait / crème liquide"] }
 ];
 
+function ing(name, qty) { return { name, qty }; }
+
 const COCKTAILS = [
-  { name:"Mojito", glass:"Verre long", ingredients:["Rhum blanc","Jus de citron vert","Sirop de sucre","Menthe fraîche","Soda / eau gazeuse"], steps:"Piler la menthe avec le sucre et le citron vert, ajouter le rhum, compléter au soda, glace pilée." },
-  { name:"Daiquiri", glass:"Verre à cocktail", ingredients:["Rhum blanc","Jus de citron vert","Sirop de sucre"], steps:"Shaker tous les ingrédients avec de la glace, filtrer dans un verre glacé." },
-  { name:"Gin Tonic", glass:"Verre ballon", ingredients:["Gin","Tonic"], steps:"Verser le gin sur glaçons, compléter au tonic, garnir d'un zeste." },
-  { name:"Whisky Sour", glass:"Verre old fashioned", ingredients:["Whisky","Jus de citron","Sirop de sucre"], steps:"Shaker avec glace, filtrer sur glaçons frais." },
-  { name:"Margarita", glass:"Verre à cocktail", ingredients:["Tequila","Triple sec","Jus de citron vert"], steps:"Shaker avec glace, servir dans un verre au bord salé." },
-  { name:"Cosmopolitan", glass:"Verre à cocktail", ingredients:["Vodka","Triple sec","Jus de citron vert","Jus de cranberry"], steps:"Shaker avec glace, filtrer dans un verre glacé." },
-  { name:"Moscow Mule", glass:"Mug en cuivre", ingredients:["Vodka","Jus de citron vert","Ginger beer"], steps:"Verser sur glace, compléter au ginger beer, garnir de citron vert." },
-  { name:"Screwdriver", glass:"Verre long", ingredients:["Vodka","Jus d'orange"], steps:"Verser sur glaçons, mélanger." },
-  { name:"Cuba Libre", glass:"Verre long", ingredients:["Rhum ambré","Coca","Jus de citron vert"], steps:"Verser sur glace, compléter au coca, un trait de citron vert." },
-  { name:"Old Fashioned", glass:"Verre old fashioned", ingredients:["Whisky","Sirop de sucre","Angostura bitters"], steps:"Diluer le sucre avec les bitters, ajouter le whisky et un gros glaçon." },
-  { name:"Negroni", glass:"Verre old fashioned", ingredients:["Gin","Vermouth rouge","Triple sec"], steps:"À défaut de Campari : verser à parts égales sur glace, mélanger, zeste d'orange." },
-  { name:"Americano", glass:"Verre old fashioned", ingredients:["Vermouth rouge","Soda / eau gazeuse"], steps:"Verser sur glace, compléter au soda, zeste d'orange." },
-  { name:"Tequila Sunrise", glass:"Verre long", ingredients:["Tequila","Jus d'orange","Sirop de grenadine"], steps:"Verser tequila et jus d'orange sur glace, faire couler la grenadine au fond." },
-  { name:"Amaretto Sour", glass:"Verre old fashioned", ingredients:["Amaretto","Jus de citron","Sirop de sucre"], steps:"Shaker avec glace, filtrer sur glaçons frais." },
-  { name:"French 75", glass:"Flûte", ingredients:["Gin","Jus de citron","Sirop de sucre","Champagne / prosecco"], steps:"Shaker gin, citron, sucre avec glace, filtrer en flûte, compléter au champagne." },
-  { name:"Kir Royal", glass:"Flûte", ingredients:["Champagne / prosecco","Sirop de grenadine"], steps:"Verser un trait de crème de cassis (ou grenadine) puis compléter au champagne." },
-  { name:"Grasshopper", glass:"Verre à cocktail", ingredients:["Crème de menthe","Amaretto"], steps:"Shaker avec glace, filtrer. Version simplifiée sans crème fraîche." },
-  { name:"Dark 'n' Stormy", glass:"Verre long", ingredients:["Rhum ambré","Ginger beer","Jus de citron vert"], steps:"Verser le rhum sur glace, compléter au ginger beer, un trait de citron vert." },
-  { name:"Vodka Cranberry", glass:"Verre long", ingredients:["Vodka","Jus de cranberry"], steps:"Verser sur glaçons, mélanger, garnir de citron vert." },
-  { name:"Sidecar", glass:"Verre à cocktail", ingredients:["Cognac","Triple sec","Jus de citron"], steps:"Shaker avec glace, filtrer dans un verre au bord sucré." }
+  { name:"Mojito", glass:"Verre long", ingredients:[ing("Rhum blanc","6 cl"),ing("Jus de citron vert","3 cl"),ing("Sirop de sucre","2 cl"),ing("Menthe fraîche","8 feuilles"),ing("Soda / eau gazeuse","4 cl")], steps:"Piler la menthe avec le sucre et le citron vert, ajouter le rhum, glace pilée, compléter au soda." },
+  { name:"Daiquiri", glass:"Verre à cocktail", ingredients:[ing("Rhum blanc","6 cl"),ing("Jus de citron vert","2,5 cl"),ing("Sirop de sucre","1,5 cl")], steps:"Shaker avec glace, filtrer dans un verre glacé." },
+  { name:"Gin Tonic", glass:"Verre ballon", ingredients:[ing("Gin","5 cl"),ing("Tonic","15 cl")], steps:"Verser le gin sur glaçons, compléter au tonic, garnir d'un zeste." },
+  { name:"Whisky Sour", glass:"Verre old fashioned", ingredients:[ing("Whisky","6 cl"),ing("Jus de citron","3 cl"),ing("Sirop de sucre","1,5 cl")], steps:"Shaker avec glace, filtrer sur glaçons frais." },
+  { name:"Margarita", glass:"Verre à cocktail", ingredients:[ing("Tequila","5 cl"),ing("Triple sec","2 cl"),ing("Jus de citron vert","2 cl")], steps:"Shaker avec glace, servir dans un verre au bord salé." },
+  { name:"Cosmopolitan", glass:"Verre à cocktail", ingredients:[ing("Vodka","4 cl"),ing("Triple sec","1,5 cl"),ing("Jus de citron vert","1,5 cl"),ing("Jus de cranberry","3 cl")], steps:"Shaker avec glace, filtrer dans un verre glacé." },
+  { name:"Moscow Mule", glass:"Mug en cuivre", ingredients:[ing("Vodka","5 cl"),ing("Jus de citron vert","1,5 cl"),ing("Ginger beer","10 cl")], steps:"Verser sur glace, compléter au ginger beer, garnir de citron vert." },
+  { name:"Screwdriver", glass:"Verre long", ingredients:[ing("Vodka","5 cl"),ing("Jus d'orange","10 cl")], steps:"Verser sur glaçons, mélanger." },
+  { name:"Cuba Libre", glass:"Verre long", ingredients:[ing("Rhum ambré","5 cl"),ing("Coca","12 cl"),ing("Jus de citron vert","1 cl")], steps:"Verser sur glace, compléter au coca, un trait de citron vert." },
+  { name:"Old Fashioned", glass:"Verre old fashioned", ingredients:[ing("Whisky","6 cl"),ing("Sirop de sucre","1 cl"),ing("Angostura bitters","2 traits")], steps:"Diluer le sucre avec les bitters, ajouter le whisky et un gros glaçon." },
+  { name:"Negroni", glass:"Verre old fashioned", ingredients:[ing("Gin","3 cl"),ing("Vermouth rouge","3 cl"),ing("Campari","3 cl")], steps:"Verser à parts égales sur glace, mélanger, zeste d'orange." },
+  { name:"Americano", glass:"Verre old fashioned", ingredients:[ing("Campari","3 cl"),ing("Vermouth rouge","3 cl"),ing("Soda / eau gazeuse","6 cl")], steps:"Verser sur glace, compléter au soda, zeste d'orange." },
+  { name:"Boulevardier", glass:"Verre old fashioned", ingredients:[ing("Whisky","3 cl"),ing("Campari","3 cl"),ing("Vermouth rouge","3 cl")], steps:"Mélanger avec glace, filtrer sur un gros glaçon, zeste d'orange." },
+  { name:"Tequila Sunrise", glass:"Verre long", ingredients:[ing("Tequila","5 cl"),ing("Jus d'orange","10 cl"),ing("Sirop de grenadine","1,5 cl")], steps:"Verser tequila et jus d'orange sur glace, faire couler la grenadine au fond sans mélanger." },
+  { name:"Amaretto Sour", glass:"Verre old fashioned", ingredients:[ing("Amaretto","5 cl"),ing("Jus de citron","3 cl"),ing("Sirop de sucre","1 cl")], steps:"Shaker avec glace, filtrer sur glaçons frais." },
+  { name:"French 75", glass:"Flûte", ingredients:[ing("Gin","3 cl"),ing("Jus de citron","1,5 cl"),ing("Sirop de sucre","1 cl"),ing("Champagne / prosecco","6 cl")], steps:"Shaker gin, citron, sucre avec glace, filtrer en flûte, compléter au champagne." },
+  { name:"Kir Royal", glass:"Flûte", ingredients:[ing("Crème de cassis","1,5 cl"),ing("Champagne / prosecco","12 cl")], steps:"Verser la crème de cassis puis compléter au champagne, sans mélanger." },
+  { name:"Kir", glass:"Verre à vin", ingredients:[ing("Crème de cassis","1,5 cl"),ing("Vin blanc sec","10 cl")], steps:"Verser la crème de cassis puis compléter au vin blanc." },
+  { name:"Aperol Spritz", glass:"Verre ballon", ingredients:[ing("Aperol","6 cl"),ing("Champagne / prosecco","9 cl"),ing("Soda / eau gazeuse","3 cl")], steps:"Verser sur glaçons dans l'ordre : prosecco, Aperol, soda. Garnir d'une rondelle d'orange." },
+  { name:"Grasshopper", glass:"Verre à cocktail", ingredients:[ing("Crème de menthe","3 cl"),ing("Amaretto","3 cl"),ing("Lait / crème liquide","3 cl")], steps:"Shaker avec glace, filtrer dans un verre glacé." },
+  { name:"Dark 'n' Stormy", glass:"Verre long", ingredients:[ing("Rhum ambré","5 cl"),ing("Ginger beer","12 cl"),ing("Jus de citron vert","1 cl")], steps:"Verser le rhum sur glace, compléter au ginger beer, un trait de citron vert." },
+  { name:"Vodka Cranberry", glass:"Verre long", ingredients:[ing("Vodka","5 cl"),ing("Jus de cranberry","12 cl")], steps:"Verser sur glaçons, mélanger, garnir de citron vert." },
+  { name:"Sidecar", glass:"Verre à cocktail", ingredients:[ing("Cognac","4 cl"),ing("Triple sec","2 cl"),ing("Jus de citron","2 cl")], steps:"Shaker avec glace, filtrer dans un verre au bord sucré." },
+  { name:"White Russian", glass:"Verre old fashioned", ingredients:[ing("Vodka","5 cl"),ing("Kahlua","2 cl"),ing("Lait / crème liquide","3 cl")], steps:"Verser vodka et Kahlua sur glace, ajouter la crème délicatement en dernier." },
+  { name:"Black Russian", glass:"Verre old fashioned", ingredients:[ing("Vodka","5 cl"),ing("Kahlua","2 cl")], steps:"Verser sur glaçons, mélanger." },
+  { name:"Mudslide", glass:"Verre old fashioned", ingredients:[ing("Vodka","3 cl"),ing("Kahlua","3 cl"),ing("Baileys","3 cl"),ing("Lait / crème liquide","3 cl")], steps:"Shaker avec glace, verser sur glaçons." },
+  { name:"B-52", glass:"Verre à shot", ingredients:[ing("Kahlua","2 cl"),ing("Baileys","2 cl"),ing("Triple sec","2 cl")], steps:"Verser délicatement en couches successives, du plus dense au moins dense, à l'aide d'une cuillère à dos rond." },
+  { name:"Godfather", glass:"Verre old fashioned", ingredients:[ing("Whisky","4,5 cl"),ing("Amaretto","1,5 cl")], steps:"Verser sur glaçons, mélanger." },
+  { name:"Godmother", glass:"Verre old fashioned", ingredients:[ing("Vodka","4,5 cl"),ing("Amaretto","1,5 cl")], steps:"Verser sur glaçons, mélanger." },
+  { name:"Kamikaze", glass:"Verre à shot / cocktail", ingredients:[ing("Vodka","3 cl"),ing("Triple sec","3 cl"),ing("Jus de citron vert","3 cl")], steps:"Shaker avec glace, filtrer." },
+  { name:"Between the Sheets", glass:"Verre à cocktail", ingredients:[ing("Cognac","2 cl"),ing("Rhum blanc","2 cl"),ing("Triple sec","2 cl"),ing("Jus de citron","2 cl")], steps:"Shaker avec glace, filtrer dans un verre glacé." },
+  { name:"Long Island Iced Tea", glass:"Verre long", ingredients:[ing("Vodka","1,5 cl"),ing("Gin","1,5 cl"),ing("Rhum blanc","1,5 cl"),ing("Tequila","1,5 cl"),ing("Triple sec","1,5 cl"),ing("Jus de citron","2,5 cl"),ing("Sirop de sucre","1,5 cl"),ing("Coca","3 cl")], steps:"Verser tous les alcools et le citron sur glace, mélanger, compléter au coca." },
+  { name:"Greyhound", glass:"Verre long", ingredients:[ing("Vodka","5 cl"),ing("Jus de pamplemousse","10 cl")], steps:"Verser sur glaçons, mélanger." },
+  { name:"Salty Dog", glass:"Verre long", ingredients:[ing("Gin","5 cl"),ing("Jus de pamplemousse","10 cl")], steps:"Verre au bord salé, verser sur glaçons, mélanger." },
+  { name:"Paloma", glass:"Verre long", ingredients:[ing("Tequila","5 cl"),ing("Jus de pamplemousse","8 cl"),ing("Jus de citron vert","1 cl"),ing("Soda / eau gazeuse","4 cl")], steps:"Verser sur glace, compléter au soda, verre au bord salé en option." },
+  { name:"Sea Breeze", glass:"Verre long", ingredients:[ing("Vodka","5 cl"),ing("Jus de cranberry","8 cl"),ing("Jus de pamplemousse","4 cl")], steps:"Verser sur glaçons, mélanger." },
+  { name:"Piña Colada", glass:"Verre long / hurricane", ingredients:[ing("Rhum blanc","5 cl"),ing("Jus d'ananas","9 cl"),ing("Crème de coco","3 cl")], steps:"Mixer ou shaker vigoureusement avec glace, servir bien frais." },
+  { name:"Mimosa", glass:"Flûte", ingredients:[ing("Champagne / prosecco","7,5 cl"),ing("Jus d'orange","7,5 cl")], steps:"Verser à parts égales dans une flûte, sans mélanger." },
+  { name:"Champagne Cocktail", glass:"Flûte", ingredients:[ing("Champagne / prosecco","12 cl"),ing("Angostura bitters","2 traits"),ing("Sirop de sucre","0,5 cl")], steps:"Imbiber le sucre de bitters au fond de la flûte, compléter au champagne." },
+  { name:"Manhattan", glass:"Verre à cocktail", ingredients:[ing("Whisky","6 cl"),ing("Vermouth rouge","3 cl"),ing("Angostura bitters","2 traits")], steps:"Mélanger avec glace, filtrer dans un verre glacé, cerise en garniture." },
+  { name:"Bronx", glass:"Verre à cocktail", ingredients:[ing("Gin","4 cl"),ing("Vermouth rouge","1,5 cl"),ing("Vermouth sec","1,5 cl"),ing("Jus d'orange","1,5 cl")], steps:"Shaker avec glace, filtrer dans un verre glacé." },
+  { name:"Gimlet", glass:"Verre à cocktail", ingredients:[ing("Gin","5 cl"),ing("Jus de citron vert","2 cl"),ing("Sirop de sucre","1 cl")], steps:"Shaker avec glace, filtrer dans un verre glacé." },
+  { name:"Tom Collins", glass:"Verre long", ingredients:[ing("Gin","4,5 cl"),ing("Jus de citron","3 cl"),ing("Sirop de sucre","1,5 cl"),ing("Soda / eau gazeuse","6 cl")], steps:"Shaker gin, citron, sucre avec glace, verser sur glaçons, compléter au soda." },
+  { name:"Pastis", glass:"Verre long", ingredients:[ing("Pastis","3 cl")], steps:"Verser le pastis, ajouter environ 5 volumes d'eau fraîche et des glaçons." }
 ];
 
 const STAR_FULL = "★", STAR_EMPTY = "☆";
@@ -120,16 +153,16 @@ function renderCategories() {
 
 function renderList() {
   const scored = COCKTAILS.map(c => {
-    const missing = c.ingredients.filter(i => !owned.has(i));
+    const missing = c.ingredients.filter(i => !owned.has(i.name));
     return { ...c, missing, makeable: missing.length === 0 };
   })
   .filter(c => onlyMakeable ? c.makeable : true)
   .filter(c => c.name.toLowerCase().includes(query.toLowerCase()))
   .sort((a, b) => a.missing.length - b.missing.length || a.name.localeCompare(b.name));
 
-  const makeableCount = COCKTAILS.filter(c => c.ingredients.every(i => owned.has(i))).length;
+  const makeableCount = COCKTAILS.filter(c => c.ingredients.every(i => owned.has(i.name))).length;
   document.getElementById("count-line").textContent =
-    `${makeableCount} cocktail${makeableCount !== 1 ? "s" : ""} réalisable${makeableCount !== 1 ? "s" : ""} avec votre bar actuel`;
+    `${makeableCount} cocktail${makeableCount !== 1 ? "s" : ""} réalisable${makeableCount !== 1 ? "s" : ""} sur ${COCKTAILS.length}, avec votre bar actuel`;
 
   const list = document.getElementById("list");
   if (scored.length === 0) {
@@ -138,6 +171,13 @@ function renderList() {
   }
   list.innerHTML = scored.map(c => {
     const r = ratings[c.name] || 0;
+    const ingredientsHtml = c.ingredients.map(i => {
+      const isMissing = !owned.has(i.name);
+      return `<li class="${isMissing ? "miss" : ""}">
+        <span class="ing-name"><span class="dot ${isMissing ? "off" : ""}"></span>${i.name}</span>
+        <span class="ing-qty">${i.qty}</span>
+      </li>`;
+    }).join("");
     return `
     <div class="card ${c.makeable ? "ready" : ""}">
       <div class="card-head">
@@ -145,8 +185,8 @@ function renderList() {
         <span class="status ${c.makeable ? "ready" : ""}">${c.makeable ? "Prêt" : c.missing.length === 1 ? "1 ingrédient manquant" : c.missing.length + " ingrédients manquants"}</span>
       </div>
       <div class="glass">${c.glass}</div>
+      <ul class="ing-list">${ingredientsHtml}</ul>
       <div class="steps">${c.steps}</div>
-      ${!c.makeable ? `<div class="missing">Manque : ${c.missing.join(", ")}</div>` : ""}
       <div class="stars" data-name="${c.name}">
         ${[1,2,3,4,5].map(n => `<button data-n="${n}">${n <= r ? STAR_FULL : STAR_EMPTY}</button>`).join("")}
       </div>
