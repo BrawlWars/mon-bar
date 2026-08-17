@@ -67,18 +67,49 @@
   .share-btn { font-size: 13px; padding: 9px 14px; border-radius: 8px; border: 1px solid #3A3346; background: transparent; color: #E8C77A; cursor: pointer; }
   .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #2E2740; color: #EDE6DA; font-size: 13px; padding: 10px 16px; border-radius: 8px; z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.2s; font-family: -apple-system, Helvetica, Arial, sans-serif; }
   .toast.show { opacity: 1; }
+  .control-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; color: #9C93A8; margin-bottom: 5px; }
+  .field input, .field select, .field textarea { width: 100%; font-size: 14px; padding: 9px 10px; border-radius: 8px; border: 1px solid #3A3346; background: #211C2B; color: #EDE6DA; outline: none; font-family: -apple-system, Helvetica, Arial, sans-serif; }
+  .field textarea { min-height: 70px; resize: vertical; }
+  .ing-row { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
+  .ing-row input { flex: 1; font-size: 13px; padding: 8px 9px; border-radius: 7px; border: 1px solid #3A3346; background: #211C2B; color: #EDE6DA; outline: none; }
+  .ing-row input.cf-ing-qty { flex: 0 0 90px; }
+  .ing-row button { background: none; border: none; color: #6E647F; font-size: 20px; cursor: pointer; padding: 0 4px; }
+  .add-row-btn { font-size: 12px; padding: 7px 10px; border-radius: 7px; border: 1px dashed #3A3346; background: transparent; color: #9C93A8; cursor: pointer; margin-bottom: 14px; }
+  .submit-btn { font-size: 14px; padding: 11px 16px; border-radius: 8px; border: none; background: #C9A050; color: #17141C; font-weight: bold; cursor: pointer; width: 100%; }
+  .danger-btn { font-size: 13px; padding: 9px 14px; border-radius: 8px; border: 1px solid #5A2E2E; background: transparent; color: #D68989; cursor: pointer; }
+  .lb-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #241F2E; }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-name { font-size: 14px; color: #EDE6DA; }
+  .lb-top { font-size: 12px; color: #8D839E; margin-top: 2px; }
+  .lb-count { font-size: 12px; color: #C9A050; white-space: nowrap; }
+  .tab-row { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab-btn { flex: 1; font-size: 13px; padding: 10px; border-radius: 10px; border: 1px solid #3A3346; background: transparent; color: #B8AFC7; cursor: pointer; font-family: -apple-system, Helvetica, Arial, sans-serif; }
+  .tab-btn.active { border-color: #C9A050; background: rgba(201,160,80,0.12); color: #E8C77A; }
 </style>
 </head>
 <body>
 <div class="wrap ui">
+  <div class="tab-row">
+    <button class="tab-btn active" id="tab-cocktails">🍸 Cocktails</button>
+    <button class="tab-btn" id="tab-games">🎲 Jeux</button>
+  </div>
+
+  <div id="view-cocktails">
   <div class="head-row">
     <div>
       <div class="eyebrow">Mon bar</div>
       <h1 class="voice">Ce que vous pouvez servir ce soir</h1>
     </div>
-    <button class="reset-btn" id="reset-btn">Réinitialiser</button>
   </div>
   <p class="sub" id="count-line"></p>
+
+  <div class="control-row">
+    <button class="reset-btn" id="add-btn">+ Cocktail perso</button>
+    <button class="reset-btn" id="leaderboard-btn">Classement amis</button>
+    <button class="reset-btn" id="reset-btn">Réinitialiser mon bar</button>
+  </div>
 
   <div class="fav-section" id="fav-section" style="display:none">
     <div class="cat-label">Vos favoris</div>
@@ -99,12 +130,28 @@
   </div>
 
   <div id="list"></div>
+  </div>
+
+  <div id="view-games" style="display:none">
+    <div class="eyebrow">Mon bar</div>
+    <h1 class="voice">Jeux à boire</h1>
+    <p class="sub" id="games-count-line"></p>
+    <div class="control-row">
+      <button class="reset-btn" id="add-game-btn">+ Jeu perso</button>
+    </div>
+    <div class="chips" id="game-cat-chips"></div>
+    <div class="toolbar">
+      <input id="game-search" placeholder="Chercher un jeu">
+    </div>
+    <div id="games-list"></div>
+  </div>
 </div>
 
 <div class="overlay ui" id="overlay">
   <div class="sheet" id="sheet"></div>
 </div>
 <div class="toast ui" id="toast"></div>
+<datalist id="ingredient-options"></datalist>
 
 <script type="module">
 const CATEGORIES = [
@@ -168,21 +215,91 @@ const COCKTAILS = [
   c("Ginger Citron Fizz","Verre long","Sans alcool","Sans alcool",[ing("Ginger beer","12 cl"),ing("Jus de citron","2 cl"),ing("Sirop de sucre","1 cl")],"Verser sur glaçons, mélanger.")
 ];
 
+/* ---- Notes partagées (Firebase Firestore, optionnel) ---- */
+const firebaseConfig = {
+  apiKey: "TON_API_KEY",
+  authDomain: "TON_PROJET.firebaseapp.com",
+  projectId: "TON_PROJET",
+  storageBucket: "TON_PROJET.appspot.com",
+  messagingSenderId: "TON_SENDER_ID",
+  appId: "TON_APP_ID"
+};
+const FIREBASE_ENABLED = firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("TON_");
+
 const CATEGORY_OPTIONS = ["Tous","Apéritif","Classique","Digestif","Sans alcool"];
-const BASE_OPTIONS = ["Tous", ...Array.from(new Set(COCKTAILS.map(x => x.base))).sort((a,b)=>a.localeCompare(b))];
+
+function g(name, category, players, items, rules) { return { name, category, players, items, rules }; }
+
+const GAMES = [
+  g("Roi du Cercle", "Cartes", "4 joueurs et plus",
+    ["Jeu de 52 cartes", "Un grand verre vide au centre de la table", "Boissons"],
+    "Étalez les cartes face cachée en cercle autour du verre vide. À tour de rôle, piochez une carte et appliquez la règle : As = cul sec, 2 = distribue 2 gorgées, 3 = bois 3 gorgées, 4 = les filles boivent, 5 = les mecs boivent, 6 = pouce (le dernier à toucher la table boit), 7 = les bras en l'air (le dernier boit), 8 = choisissez un binôme qui boit à chaque fois que vous buvez, 9 = rime (trouvez un mot qui rime en boucle, celui qui bloque boit), 10 = catégorie (énumérez des éléments d'une catégorie), Valet = inventez une règle qui dure toute la partie, Dame = posez une question, celui qui répond boit, Roi = versez une gorgée de votre choix dans le verre central. Le joueur qui pioche le 4e et dernier Roi boit le contenu entier du verre central."),
+  g("Jamais je n'ai jamais", "Ambiance", "3 joueurs et plus",
+    [],
+    "Chacun à son tour dit une phrase commençant par « Je n'ai jamais... » (ex. « je n'ai jamais sauté en parachute »). Tous les joueurs qui ont déjà fait cette chose boivent une gorgée. Le tour de parole tourne autour de la table. Plus les phrases sont personnelles ou surprenantes, plus le jeu devient intéressant."),
+  g("Flip Cup", "Adresse", "2 équipes de taille égale",
+    ["1 gobelet par joueur", "Une table longue", "Boissons (bière ou soft)"],
+    "Deux équipes se font face de chaque côté de la table, chaque joueur avec un gobelet à moitié rempli devant lui. Au signal, le premier joueur de chaque équipe boit son verre, le pose au bord de la table et doit le faire basculer d'un coup de doigt sous le rebord pour qu'il atterrisse à l'envers. Dès que c'est réussi, le joueur suivant peut commencer. La première équipe à finir tous ses gobelets gagne."),
+  g("Beer Pong", "Adresse", "2 équipes de 1 à 2 joueurs",
+    ["10 gobelets par équipe", "1 ou 2 balles de ping-pong", "Une table", "Boisson au choix", "Un verre d'eau pour rincer la balle"],
+    "Disposez les 10 gobelets en triangle à chaque extrémité de la table, remplis à parts égales. À tour de rôle, chaque équipe lance la balle en tentant de la faire atterrir dans un gobelet adverse. Si elle rentre, l'équipe adverse boit le gobelet et le retire du jeu. La première équipe qui fait couler tous les gobelets adverses gagne."),
+  g("Dés Menteur", "Dés", "3 joueurs et plus",
+    ["5 dés par joueur", "1 gobelet par joueur pour cacher les dés", "Boissons"],
+    "Chaque joueur lance ses dés cachés sous son gobelet et regarde uniquement les siens. À tour de rôle, on annonce une quantité totale supposée d'une valeur de dé présente sur la table (ex. « quatre 3 »), toujours plus haut que l'annonce précédente. Le joueur suivant peut surenchérir ou douter en disant « menteur ». On révèle alors tous les dés : si l'annonce était fausse, celui qui a menti boit ; si elle était vraie, celui qui a douté boit."),
+  g("Le Président", "Cartes", "3 joueurs et plus",
+    ["Jeu de 52 cartes", "Boissons"],
+    "Distribuez toutes les cartes. Le but est de se débarrasser de sa main en posant des cartes de valeur égale ou supérieure à la combinaison précédente. Qui ne peut ou ne veut pas jouer passe. Le premier à vider sa main devient Président pour la manche suivante, le dernier devient Trouduc et doit boire, en plus d'échanger ses meilleures cartes avec le Président au tour suivant."),
+  g("Catégories", "Ambiance", "3 joueurs et plus",
+    [],
+    "Un joueur annonce une catégorie (ex. « marques de voitures », « capitales du monde »). Chacun à son tour doit citer un élément de cette catégorie sans répéter ce qui a déjà été dit, dans un temps raisonnable. Celui qui bloque, répète un élément déjà cité ou se trompe boit une gorgée et relance une nouvelle catégorie."),
+  g("Ninja", "Ambiance", "4 joueurs et plus",
+    [],
+    "Tout le monde se lève en cercle, les mains jointes devant soi façon « ninja ». Au signal, chacun fige dans une pose. À tour de rôle, chaque joueur tente en un seul mouvement rapide de toucher la main d'un adversaire pendant que celui-ci tente d'esquiver. Si vous êtes touché sur la main, vous buvez et sortez du jeu. Les autres restent figés entre les tours. Le dernier debout gagne, les éliminés terminent leur verre."),
+  g("Course de Chevaux", "Dés", "3 joueurs et plus",
+    ["2 dés", "Une feuille et un stylo pour tracer une piste (ou 6 verres alignés)", "Des jetons ou de la petite monnaie pour les mises", "Boissons"],
+    "Tracez une piste numérotée de 1 à 6 avec une ligne de départ et d'arrivée. Chaque joueur mise sur un numéro de cheval. À tour de rôle, lancez les deux dés : le cheval correspondant à la somme avance d'une case. Le propriétaire du dernier cheval à franchir la ligne d'arrivée boit une pénalité, ou le gagnant distribue des gorgées aux perdants selon la règle choisie en début de partie."),
+  g("Mistigri", "Cartes", "3 joueurs et plus",
+    ["Jeu de 52 cartes duquel on retire une Dame, pour qu'il en reste une seule non appariée", "Boissons"],
+    "Distribuez toutes les cartes. Chaque joueur écarte immédiatement les paires qu'il a en main. À tour de rôle, chacun pioche une carte au hasard dans la main de son voisin de gauche et écarte les nouvelles paires formées. Le jeu continue jusqu'à ce qu'il ne reste qu'une seule carte, la Dame solitaire. Le joueur qui la détient à la fin boit une pénalité.")
+];
+const GAME_CATEGORY_OPTIONS = ["Tous","Cartes","Dés","Adresse","Ambiance"];
 
 const STAR_FULL = "★", STAR_EMPTY = "☆";
 let owned = new Set(JSON.parse(localStorage.getItem("mon-bar-inventory") || "[]"));
 let ratings = JSON.parse(localStorage.getItem("mon-bar-ratings") || "{}");
+let customCocktails = JSON.parse(localStorage.getItem("mon-bar-custom") || "[]");
+let sharedCustomCocktails = [];
 let sharedRatings = {};
+let allRatingsRaw = [];
 let query = "";
 let onlyMakeable = false;
 let filterCategory = "Tous";
 let filterBase = "Tous";
+let formIngredients = [{ name: "", qty: "" }];
+let gameQuery = "";
+let gameFilterCategory = "Tous";
+let customGames = JSON.parse(localStorage.getItem("mon-bar-custom-games") || "[]");
+let sharedCustomGames = [];
+let formGameItems = [""];
+
+function allGames() { return FIREBASE_ENABLED ? [...GAMES, ...sharedCustomGames] : [...GAMES, ...customGames]; }
+
+function allCocktails() { return FIREBASE_ENABLED ? [...COCKTAILS, ...sharedCustomCocktails] : [...COCKTAILS, ...customCocktails]; }
+function extraIngredients() {
+  const known = new Set(CATEGORIES.flatMap(c => c.items));
+  return Array.from(new Set(allCocktails().filter(x => x.custom).flatMap(x => x.ingredients.map(i => i.name))))
+    .filter(n => !known.has(n))
+    .sort((a, b) => a.localeCompare(b));
+}
+function allKnownIngredients() { return [...CATEGORIES.flatMap(cat => cat.items), ...extraIngredients()]; }
 
 function save() {
   localStorage.setItem("mon-bar-inventory", JSON.stringify([...owned]));
   localStorage.setItem("mon-bar-ratings", JSON.stringify(ratings));
+}
+
+function saveCustom() {
+  localStorage.setItem("mon-bar-custom", JSON.stringify(customCocktails));
 }
 
 function showToast(msg) {
@@ -194,12 +311,24 @@ function showToast(msg) {
 
 function renderCategories() {
   const el = document.getElementById("categories");
-  el.innerHTML = CATEGORIES.map(cat => `
+  let html = CATEGORIES.map(cat => `
     <div class="cat-label">${cat.name}</div>
     <div class="chips">
       ${cat.items.map(item => `<button class="chip ${owned.has(item) ? "on" : ""}" data-item="${item}">${owned.has(item) ? "✓ " : ""}${item}</button>`).join("")}
     </div>
   `).join("");
+  const extra = extraIngredients();
+  if (extra.length) {
+    html += `
+      <div class="cat-label">Autres (perso)</div>
+      <div class="chips">
+        ${extra.map(item => `<button class="chip ${owned.has(item) ? "on" : ""}" data-item="${item}">${owned.has(item) ? "✓ " : ""}${item}</button>`).join("")}
+      </div>
+    `;
+  }
+  el.innerHTML = html;
+  document.getElementById("ingredient-options").innerHTML =
+    allKnownIngredients().map(i => `<option value="${i}"></option>`).join("");
   el.querySelectorAll(".chip").forEach(btn => {
     btn.addEventListener("click", () => {
       const item = btn.dataset.item;
@@ -213,7 +342,7 @@ function renderCategories() {
 }
 
 function scoredCocktails() {
-  return COCKTAILS.map(x => {
+  return allCocktails().map(x => {
     const missing = x.ingredients.filter(i => !owned.has(i.name));
     return { ...x, missing, makeable: missing.length === 0 };
   });
@@ -231,10 +360,15 @@ function filteredCocktails() {
 function renderFilters() {
   const catSel = document.getElementById("filter-category");
   const baseSel = document.getElementById("filter-base");
+  const baseOptions = ["Tous", ...Array.from(new Set(allCocktails().map(x => x.base))).sort((a, b) => a.localeCompare(b))];
+  const prevCat = catSel.value || filterCategory;
+  const prevBase = baseSel.value || filterBase;
   catSel.innerHTML = CATEGORY_OPTIONS.map(o => `<option value="${o}">${o === "Tous" ? "Toutes catégories" : o}</option>`).join("");
-  baseSel.innerHTML = BASE_OPTIONS.map(o => `<option value="${o}">${o === "Tous" ? "Toutes bases" : o}</option>`).join("");
-  catSel.addEventListener("change", () => { filterCategory = catSel.value; renderList(); });
-  baseSel.addEventListener("change", () => { filterBase = baseSel.value; renderList(); });
+  baseSel.innerHTML = baseOptions.map(o => `<option value="${o}">${o === "Tous" ? "Toutes bases" : o}</option>`).join("");
+  if (baseOptions.includes(prevBase)) baseSel.value = prevBase;
+  catSel.value = prevCat;
+  catSel.onchange = () => { filterCategory = catSel.value; renderList(); };
+  baseSel.onchange = () => { filterBase = baseSel.value; renderList(); };
 }
 
 function renderFavorites() {
@@ -274,9 +408,10 @@ function sharedRatingHtml(name) {
 
 function renderList() {
   const scored = filteredCocktails();
-  const makeableCount = COCKTAILS.filter(x => x.ingredients.every(i => owned.has(i.name))).length;
+  const all = allCocktails();
+  const makeableCount = all.filter(x => x.ingredients.every(i => owned.has(i.name))).length;
   document.getElementById("count-line").textContent =
-    `${makeableCount} cocktail${makeableCount !== 1 ? "s" : ""} réalisable${makeableCount !== 1 ? "s" : ""} sur ${COCKTAILS.length}, avec votre bar actuel`;
+    `${makeableCount} cocktail${makeableCount !== 1 ? "s" : ""} réalisable${makeableCount !== 1 ? "s" : ""} sur ${all.length}, avec votre bar actuel`;
 
   const list = document.getElementById("list");
   if (scored.length === 0) {
@@ -291,7 +426,7 @@ function renderList() {
         <h3 class="voice">${x.name}</h3>
         <span class="status ${x.makeable ? "ready" : ""}">${x.makeable ? "Prêt" : x.missing.length === 1 ? "1 ingrédient manquant" : x.missing.length + " ingrédients manquants"}</span>
       </div>
-      <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.glass}</span></div>
+      <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.glass}</span>${x.custom ? '<span class="tag">Fait maison</span>' : ""}${x.addedBy ? `<span class="tag">Par ${x.addedBy}</span>` : ""}</div>
       <ul class="ing-list">${ingredientListHtml(x)}</ul>
       <div class="steps">${x.steps}</div>
       <div class="stars" data-name="${x.name}">
@@ -332,13 +467,15 @@ function openModal(name) {
   const x = scoredCocktails().find(x => x.name === name);
   if (!x) return;
   const r = ratings[x.name] || 0;
-  document.getElementById("sheet").dataset.current = name;
-  document.getElementById("sheet").innerHTML = `
+  const sheet = document.getElementById("sheet");
+  sheet.dataset.mode = "cocktail";
+  sheet.dataset.current = name;
+  sheet.innerHTML = `
     <div class="sheet-top">
       <h2 class="voice">${x.name}</h2>
       <button class="close-btn" id="close-modal">&times;</button>
     </div>
-    <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.glass}</span><span class="tag">${x.base}</span></div>
+    <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.glass}</span><span class="tag">${x.base}</span>${x.custom ? '<span class="tag">Fait maison</span>' : ""}${x.addedBy ? `<span class="tag">Par ${x.addedBy}</span>` : ""}</div>
     <ul class="ing-list">${ingredientListHtml(x)}</ul>
     <div class="steps">${x.steps}</div>
     <div class="stars" data-name="${x.name}">
@@ -347,10 +484,13 @@ function openModal(name) {
     ${sharedRatingHtml(x.name)}
     <div class="sheet-actions">
       <button class="share-btn" id="share-btn">Partager la recette</button>
+      ${x.custom ? '<button class="danger-btn" id="delete-btn">Supprimer</button>' : ""}
     </div>
   `;
   document.getElementById("close-modal").addEventListener("click", closeModal);
   document.getElementById("share-btn").addEventListener("click", () => shareCocktail(x));
+  const deleteBtn = document.getElementById("delete-btn");
+  if (deleteBtn) deleteBtn.addEventListener("click", () => deleteCustomCocktail(x.name));
   document.querySelectorAll("#sheet .stars button").forEach(btn => {
     btn.addEventListener("click", () => {
       const n = parseInt(btn.dataset.n, 10);
@@ -363,12 +503,179 @@ function openModal(name) {
   window.history.replaceState({}, "", url);
 }
 
+function deleteCustomCocktail(name) {
+  if (!confirm("Supprimer ce cocktail personnalisé ?")) return;
+  if (FIREBASE_ENABLED) {
+    const x = sharedCustomCocktails.find(c => c.name === name);
+    if (x && window.__monBarDeleteCustomCocktail) window.__monBarDeleteCustomCocktail(x.id);
+  } else {
+    customCocktails = customCocktails.filter(x => x.name !== name);
+    saveCustom();
+  }
+  closeModal();
+  renderCategories();
+  renderFilters();
+  renderList();
+  renderFavorites();
+  showToast("Cocktail supprimé");
+}
+
 function closeModal() {
   document.getElementById("overlay").classList.remove("open");
-  document.getElementById("sheet").dataset.current = "";
+  const sheet = document.getElementById("sheet");
+  sheet.dataset.current = "";
+  sheet.dataset.mode = "";
   const url = new URL(window.location.href);
   url.searchParams.delete("cocktail");
+  url.searchParams.delete("game");
   window.history.replaceState({}, "", url);
+}
+
+function openAddCocktailForm() {
+  formIngredients = [{ name: "", qty: "" }];
+  const sheet = document.getElementById("sheet");
+  sheet.dataset.mode = "add-form";
+  sheet.dataset.current = "";
+  sheet.innerHTML = `
+    <div class="sheet-top">
+      <h2 class="voice">Ajouter un cocktail</h2>
+      <button class="close-btn" id="close-modal">&times;</button>
+    </div>
+    <div class="field">
+      <label>Nom du cocktail</label>
+      <input id="cf-name" placeholder="Ex. Spritz maison">
+    </div>
+    <div class="field">
+      <label>Verre</label>
+      <input id="cf-glass" placeholder="Ex. Verre ballon">
+    </div>
+    <div class="field">
+      <label>Catégorie</label>
+      <select id="cf-category">
+        ${CATEGORY_OPTIONS.filter(o => o !== "Tous").map(o => `<option value="${o}">${o}</option>`).join("")}
+      </select>
+    </div>
+    <div class="field">
+      <label>Ingrédients</label>
+      <div id="cf-ingredients"></div>
+      <button class="add-row-btn" id="cf-add-row">+ Ajouter un ingrédient</button>
+    </div>
+    <div class="field">
+      <label>Étapes de préparation</label>
+      <textarea id="cf-steps" placeholder="Ex. Verser sur glace, mélanger, garnir..."></textarea>
+    </div>
+    <button class="submit-btn" id="cf-submit">Ajouter à ma base</button>
+  `;
+  document.getElementById("close-modal").addEventListener("click", closeModal);
+  document.getElementById("cf-add-row").addEventListener("click", () => {
+    formIngredients.push({ name: "", qty: "" });
+    renderFormIngredientRows();
+  });
+  document.getElementById("cf-submit").addEventListener("click", submitCustomCocktail);
+  renderFormIngredientRows();
+  document.getElementById("overlay").classList.add("open");
+}
+
+function renderFormIngredientRows() {
+  const container = document.getElementById("cf-ingredients");
+  if (!container) return;
+  container.innerHTML = formIngredients.map((row, idx) => `
+    <div class="ing-row" data-idx="${idx}">
+      <input class="cf-ing-name" list="ingredient-options" placeholder="Ingrédient" value="${(row.name || "").replace(/"/g, "&quot;")}">
+      <input class="cf-ing-qty" placeholder="Quantité" value="${(row.qty || "").replace(/"/g, "&quot;")}">
+      <button class="cf-ing-remove" title="Retirer">&times;</button>
+    </div>
+  `).join("");
+  container.querySelectorAll(".ing-row").forEach(rowEl => {
+    const idx = parseInt(rowEl.dataset.idx, 10);
+    rowEl.querySelector(".cf-ing-name").addEventListener("input", e => { formIngredients[idx].name = e.target.value; });
+    rowEl.querySelector(".cf-ing-qty").addEventListener("input", e => { formIngredients[idx].qty = e.target.value; });
+    rowEl.querySelector(".cf-ing-remove").addEventListener("click", () => {
+      formIngredients.splice(idx, 1);
+      if (formIngredients.length === 0) formIngredients.push({ name: "", qty: "" });
+      renderFormIngredientRows();
+    });
+  });
+}
+
+function submitCustomCocktail() {
+  const name = document.getElementById("cf-name").value.trim();
+  const glass = document.getElementById("cf-glass").value.trim() || "Verre au choix";
+  const category = document.getElementById("cf-category").value;
+  const steps = document.getElementById("cf-steps").value.trim() || "Mélanger les ingrédients selon vos goûts.";
+  const ingredients = formIngredients
+    .filter(i => (i.name || "").trim())
+    .map(i => ({ name: i.name.trim(), qty: (i.qty || "").trim() || "—" }));
+
+  if (!name || ingredients.length === 0) {
+    showToast("Nom et au moins un ingrédient requis");
+    return;
+  }
+  if (allCocktails().some(x => x.name.toLowerCase() === name.toLowerCase())) {
+    showToast("Un cocktail porte déjà ce nom");
+    return;
+  }
+
+  const base = ingredients[0].name;
+  const newCocktail = { name, glass, base, category, ingredients, steps, custom: true };
+
+  if (FIREBASE_ENABLED && window.__monBarAddCustomCocktail) {
+    window.__monBarAddCustomCocktail(newCocktail);
+  } else {
+    customCocktails.push(newCocktail);
+    saveCustom();
+  }
+
+  closeModal();
+  renderCategories();
+  renderFilters();
+  renderList();
+  renderFavorites();
+  showToast(FIREBASE_ENABLED ? "Cocktail ajouté et partagé avec vos amis !" : "Cocktail ajouté !");
+}
+
+function openLeaderboard() {
+  const sheet = document.getElementById("sheet");
+  sheet.dataset.mode = "leaderboard";
+  sheet.dataset.current = "";
+  if (!FIREBASE_ENABLED) {
+    sheet.innerHTML = `
+      <div class="sheet-top">
+        <h2 class="voice">Classement amis</h2>
+        <button class="close-btn" id="close-modal">&times;</button>
+      </div>
+      <p class="steps">Le classement partagé nécessite Firebase Firestore, qui n'est pas encore configuré dans l'app. Une fois vos clés ajoutées dans firebaseConfig, cette section affichera automatiquement qui a noté quoi.</p>
+    `;
+  } else {
+    const byPseudo = {};
+    allRatingsRaw.forEach(d => { (byPseudo[d.pseudo] = byPseudo[d.pseudo] || []).push(d); });
+    const rows = Object.entries(byPseudo)
+      .map(([pseudo, list]) => {
+        const top = [...list].sort((a, b) => b.value - a.value)[0];
+        return { pseudo, count: list.length, top };
+      })
+      .sort((a, b) => b.count - a.count);
+    sheet.innerHTML = `
+      <div class="sheet-top">
+        <h2 class="voice">Classement amis</h2>
+        <button class="close-btn" id="close-modal">&times;</button>
+      </div>
+      ${rows.length === 0
+        ? '<p class="steps">Aucun avis partagé pour le moment.</p>'
+        : rows.map(r => `
+          <div class="lb-row">
+            <div>
+              <div class="lb-name">${r.pseudo}</div>
+              <div class="lb-top">Coup de cœur : ${r.top.cocktail} (${r.top.value}★)</div>
+            </div>
+            <div class="lb-count">${r.count} avis</div>
+          </div>
+        `).join("")
+      }
+    `;
+  }
+  document.getElementById("close-modal").addEventListener("click", closeModal);
+  document.getElementById("overlay").classList.add("open");
 }
 
 document.getElementById("overlay").addEventListener("click", (e) => {
@@ -391,6 +698,8 @@ async function shareCocktail(x) {
 
 document.getElementById("search").addEventListener("input", (e) => { query = e.target.value; renderList(); });
 document.getElementById("only-makeable").addEventListener("change", (e) => { onlyMakeable = e.target.checked; renderList(); });
+document.getElementById("add-btn").addEventListener("click", openAddCocktailForm);
+document.getElementById("leaderboard-btn").addEventListener("click", openLeaderboard);
 document.getElementById("reset-btn").addEventListener("click", () => {
   if (confirm("Décocher tous les ingrédients de votre bar ?")) {
     owned = new Set();
@@ -401,35 +710,240 @@ document.getElementById("reset-btn").addEventListener("click", () => {
   }
 });
 
+function renderGameFilters() {
+  const el = document.getElementById("game-cat-chips");
+  el.innerHTML = GAME_CATEGORY_OPTIONS.map(o => `<button class="chip ${gameFilterCategory === o ? "on" : ""}" data-cat="${o}">${o}</button>`).join("");
+  el.querySelectorAll(".chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      gameFilterCategory = btn.dataset.cat;
+      renderGameFilters();
+      renderGamesList();
+    });
+  });
+}
+
+function filteredGames() {
+  return allGames()
+    .filter(x => gameFilterCategory === "Tous" ? true : x.category === gameFilterCategory)
+    .filter(x => x.name.toLowerCase().includes(gameQuery.toLowerCase()));
+}
+
+function renderGamesList() {
+  const list = filteredGames();
+  document.getElementById("games-count-line").textContent = `${list.length} jeu${list.length !== 1 ? "x" : ""} sur ${allGames().length} dans la bibliothèque`;
+  const el = document.getElementById("games-list");
+  if (list.length === 0) {
+    el.innerHTML = `<div class="empty">Aucun jeu ne correspond.</div>`;
+    return;
+  }
+  el.innerHTML = list.map(x => `
+    <div class="card" data-open-game="${x.name}">
+      <div class="card-head"><h3 class="voice">${x.name}</h3></div>
+      <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.players}</span>${x.custom ? '<span class="tag">Fait maison</span>' : ""}${x.addedBy ? `<span class="tag">Par ${x.addedBy}</span>` : ""}</div>
+      <div class="steps">${x.items.length} objet${x.items.length !== 1 ? "s" : ""} requis${x.items.length === 0 ? " (aucun matériel)" : ""}</div>
+    </div>
+  `).join("");
+  el.querySelectorAll("[data-open-game]").forEach(card => {
+    card.addEventListener("click", () => openGameModal(card.dataset.openGame));
+  });
+}
+
+function openGameModal(name) {
+  const x = allGames().find(x => x.name === name);
+  if (!x) return;
+  const sheet = document.getElementById("sheet");
+  sheet.dataset.mode = "game";
+  sheet.dataset.current = name;
+  sheet.innerHTML = `
+    <div class="sheet-top">
+      <h2 class="voice">${x.name}</h2>
+      <button class="close-btn" id="close-modal">&times;</button>
+    </div>
+    <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.players}</span>${x.custom ? '<span class="tag">Fait maison</span>' : ""}${x.addedBy ? `<span class="tag">Par ${x.addedBy}</span>` : ""}</div>
+    <div class="cat-label">Objets requis</div>
+    <ul class="ing-list">${x.items.length ? x.items.map(i => `<li><span class="ing-name"><span class="dot"></span>${i}</span></li>`).join("") : "<li>Aucun matériel particulier</li>"}</ul>
+    <div class="cat-label">Fonctionnement du jeu</div>
+    <div class="steps">${x.rules}</div>
+    <div class="sheet-actions">
+      <button class="share-btn" id="share-btn">Partager le jeu</button>
+      ${x.custom ? '<button class="danger-btn" id="delete-game-btn">Supprimer</button>' : ""}
+    </div>
+  `;
+  document.getElementById("close-modal").addEventListener("click", closeModal);
+  document.getElementById("share-btn").addEventListener("click", () => shareGame(x));
+  const deleteBtn = document.getElementById("delete-game-btn");
+  if (deleteBtn) deleteBtn.addEventListener("click", () => deleteCustomGame(x.name));
+  document.getElementById("overlay").classList.add("open");
+  const url = new URL(window.location.href);
+  url.searchParams.set("game", x.name);
+  window.history.replaceState({}, "", url);
+}
+
+function deleteCustomGame(name) {
+  if (!confirm("Supprimer ce jeu personnalisé ?")) return;
+  if (FIREBASE_ENABLED) {
+    const x = sharedCustomGames.find(g => g.name === name);
+    if (x && window.__monBarDeleteCustomGame) window.__monBarDeleteCustomGame(x.id);
+  } else {
+    customGames = customGames.filter(x => x.name !== name);
+    localStorage.setItem("mon-bar-custom-games", JSON.stringify(customGames));
+  }
+  closeModal();
+  renderGamesList();
+  showToast("Jeu supprimé");
+}
+
+function openAddGameForm() {
+  formGameItems = [""];
+  const sheet = document.getElementById("sheet");
+  sheet.dataset.mode = "add-game-form";
+  sheet.dataset.current = "";
+  sheet.innerHTML = `
+    <div class="sheet-top">
+      <h2 class="voice">Ajouter un jeu</h2>
+      <button class="close-btn" id="close-modal">&times;</button>
+    </div>
+    <div class="field">
+      <label>Nom du jeu</label>
+      <input id="gf-name" placeholder="Ex. Puissance 4 buvable">
+    </div>
+    <div class="field">
+      <label>Type</label>
+      <select id="gf-category">
+        ${GAME_CATEGORY_OPTIONS.filter(o => o !== "Tous").map(o => `<option value="${o}">${o}</option>`).join("")}
+      </select>
+    </div>
+    <div class="field">
+      <label>Nombre de joueurs</label>
+      <input id="gf-players" placeholder="Ex. 4 joueurs et plus">
+    </div>
+    <div class="field">
+      <label>Objets requis</label>
+      <div id="gf-items"></div>
+      <button class="add-row-btn" id="gf-add-row">+ Ajouter un objet</button>
+    </div>
+    <div class="field">
+      <label>Fonctionnement du jeu</label>
+      <textarea id="gf-rules" placeholder="Expliquez les règles étape par étape..."></textarea>
+    </div>
+    <button class="submit-btn" id="gf-submit">Ajouter à ma bibliothèque</button>
+  `;
+  document.getElementById("close-modal").addEventListener("click", closeModal);
+  document.getElementById("gf-add-row").addEventListener("click", () => {
+    formGameItems.push("");
+    renderFormGameItemRows();
+  });
+  document.getElementById("gf-submit").addEventListener("click", submitCustomGame);
+  renderFormGameItemRows();
+  document.getElementById("overlay").classList.add("open");
+}
+
+function renderFormGameItemRows() {
+  const container = document.getElementById("gf-items");
+  if (!container) return;
+  container.innerHTML = formGameItems.map((val, idx) => `
+    <div class="ing-row" data-idx="${idx}">
+      <input class="gf-item-name" placeholder="Ex. Jeu de 52 cartes" value="${(val || "").replace(/"/g, "&quot;")}">
+      <button class="gf-item-remove" title="Retirer">&times;</button>
+    </div>
+  `).join("");
+  container.querySelectorAll(".ing-row").forEach(rowEl => {
+    const idx = parseInt(rowEl.dataset.idx, 10);
+    rowEl.querySelector(".gf-item-name").addEventListener("input", e => { formGameItems[idx] = e.target.value; });
+    rowEl.querySelector(".gf-item-remove").addEventListener("click", () => {
+      formGameItems.splice(idx, 1);
+      if (formGameItems.length === 0) formGameItems.push("");
+      renderFormGameItemRows();
+    });
+  });
+}
+
+function submitCustomGame() {
+  const name = document.getElementById("gf-name").value.trim();
+  const category = document.getElementById("gf-category").value;
+  const players = document.getElementById("gf-players").value.trim() || "Groupe libre";
+  const rules = document.getElementById("gf-rules").value.trim();
+  const items = formGameItems.map(i => i.trim()).filter(Boolean);
+
+  if (!name || !rules) {
+    showToast("Nom et règles du jeu requis");
+    return;
+  }
+  if (allGames().some(x => x.name.toLowerCase() === name.toLowerCase())) {
+    showToast("Un jeu porte déjà ce nom");
+    return;
+  }
+
+  const newGame = { name, category, players, items, rules, custom: true };
+
+  if (FIREBASE_ENABLED && window.__monBarAddCustomGame) {
+    window.__monBarAddCustomGame(newGame);
+  } else {
+    customGames.push(newGame);
+    localStorage.setItem("mon-bar-custom-games", JSON.stringify(customGames));
+  }
+
+  closeModal();
+  renderGamesList();
+  showToast(FIREBASE_ENABLED ? "Jeu ajouté et partagé avec vos amis !" : "Jeu ajouté !");
+}
+
+async function shareGame(x) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("game", x.name);
+  const text = `${x.name} — Objets requis : ${x.items.join(", ") || "aucun"}. ${x.rules}`;
+  if (navigator.share) {
+    try { await navigator.share({ title: x.name, text, url: url.toString() }); } catch (e) {}
+  } else {
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      showToast("Lien copié !");
+    } catch (e) { showToast("Impossible de copier le lien"); }
+  }
+}
+
+function showView(view) {
+  document.getElementById("view-cocktails").style.display = view === "cocktails" ? "block" : "none";
+  document.getElementById("view-games").style.display = view === "games" ? "block" : "none";
+  document.getElementById("tab-cocktails").classList.toggle("active", view === "cocktails");
+  document.getElementById("tab-games").classList.toggle("active", view === "games");
+  localStorage.setItem("mon-bar-view", view);
+}
+document.getElementById("tab-cocktails").addEventListener("click", () => showView("cocktails"));
+document.getElementById("tab-games").addEventListener("click", () => showView("games"));
+document.getElementById("game-search").addEventListener("input", (e) => { gameQuery = e.target.value; renderGamesList(); });
+document.getElementById("add-game-btn").addEventListener("click", openAddGameForm);
+
 renderCategories();
 renderFilters();
 renderFavorites();
 renderList();
+renderGameFilters();
+renderGamesList();
 
-const initialCocktail = new URL(window.location.href).searchParams.get("cocktail");
-if (initialCocktail) {
+const initParams = new URL(window.location.href).searchParams;
+const initialCocktail = initParams.get("cocktail");
+const initialGame = initParams.get("game");
+const savedView = localStorage.getItem("mon-bar-view") || "cocktails";
+if (initialGame) {
+  showView("games");
+  const match = GAMES.find(x => x.name.toLowerCase() === initialGame.toLowerCase()) || customGames.find(x => x.name.toLowerCase() === initialGame.toLowerCase());
+  if (match) openGameModal(match.name);
+} else if (initialCocktail) {
+  showView("cocktails");
   const match = COCKTAILS.find(x => x.name.toLowerCase() === initialCocktail.toLowerCase());
   if (match) openModal(match.name);
+} else {
+  showView(savedView);
 }
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
 }
 
-/* ---- Notes partagées (Firebase Firestore, optionnel) ---- */
-const firebaseConfig = {
-  apiKey: "AIzaSyBU-LCyI3tuAvaA5S_8y5CphDIWKXJJebg",
-  authDomain: "mon-bar-3bba4.firebaseapp.com",
-  projectId: "mon-bar-3bba4",
-  storageBucket: "mon-bar-3bba4.firebasestorage.app",
-  messagingSenderId: "226041715009",
-  appId: "1:226041715009:web:7e837065f319123965a9c0"
-};
-const FIREBASE_ENABLED = firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("TON_");
-
 if (FIREBASE_ENABLED) {
   import("https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js").then(async ({ initializeApp }) => {
-    const { getFirestore, collection, doc, setDoc, onSnapshot } =
+    const { getFirestore, collection, doc, addDoc, deleteDoc, setDoc, onSnapshot } =
       await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js");
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -452,9 +966,9 @@ if (FIREBASE_ENABLED) {
     };
 
     onSnapshot(collection(db, "ratings"), (snap) => {
+      allRatingsRaw = snap.docs.map(d => d.data());
       const grouped = {};
-      snap.forEach((docSnap) => {
-        const d = docSnap.data();
+      allRatingsRaw.forEach((d) => {
         if (!grouped[d.cocktail]) grouped[d.cocktail] = [];
         grouped[d.cocktail].push(d.value);
       });
@@ -464,7 +978,48 @@ if (FIREBASE_ENABLED) {
         sharedRatings[name] = { avg: vals.reduce((a, b) => a + b, 0) / vals.length, count: vals.length };
       });
       renderList();
-      if (document.getElementById("sheet").dataset.current) openModal(document.getElementById("sheet").dataset.current);
+      const sheet = document.getElementById("sheet");
+      if (sheet.dataset.mode === "cocktail" && sheet.dataset.current) openModal(sheet.dataset.current);
+      else if (sheet.dataset.mode === "leaderboard") openLeaderboard();
+    });
+
+    window.__monBarAddCustomCocktail = async (cocktail) => {
+      const pseudo = getPseudo();
+      try {
+        await addDoc(collection(db, "customCocktails"), { ...cocktail, addedBy: pseudo, createdAt: Date.now() });
+      } catch (e) { console.error(e); showToast("Erreur d'envoi, réessaie."); }
+    };
+
+    window.__monBarDeleteCustomCocktail = async (id) => {
+      try { await deleteDoc(doc(db, "customCocktails", id)); } catch (e) { console.error(e); }
+    };
+
+    onSnapshot(collection(db, "customCocktails"), (snap) => {
+      sharedCustomCocktails = snap.docs.map(d => ({ id: d.id, ...d.data(), custom: true }));
+      renderCategories();
+      renderFilters();
+      renderList();
+      renderFavorites();
+      const sheet = document.getElementById("sheet");
+      if (sheet.dataset.mode === "cocktail" && sheet.dataset.current) openModal(sheet.dataset.current);
+    });
+
+    window.__monBarAddCustomGame = async (game) => {
+      const pseudo = getPseudo();
+      try {
+        await addDoc(collection(db, "customGames"), { ...game, addedBy: pseudo, createdAt: Date.now() });
+      } catch (e) { console.error(e); showToast("Erreur d'envoi, réessaie."); }
+    };
+
+    window.__monBarDeleteCustomGame = async (id) => {
+      try { await deleteDoc(doc(db, "customGames", id)); } catch (e) { console.error(e); }
+    };
+
+    onSnapshot(collection(db, "customGames"), (snap) => {
+      sharedCustomGames = snap.docs.map(d => ({ id: d.id, ...d.data(), custom: true }));
+      renderGamesList();
+      const sheet = document.getElementById("sheet");
+      if (sheet.dataset.mode === "game" && sheet.dataset.current) openGameModal(sheet.dataset.current);
     });
   });
 }
