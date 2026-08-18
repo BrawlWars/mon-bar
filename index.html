@@ -84,9 +84,56 @@
   .lb-name { font-size: 14px; color: #EDE6DA; }
   .lb-top { font-size: 12px; color: #8D839E; margin-top: 2px; }
   .lb-count { font-size: 12px; color: #C9A050; white-space: nowrap; }
+  .thumb { width: 46px; height: 46px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #211C2B; overflow: hidden; }
+  .thumb svg { width: 78%; height: 78%; }
+  .thumb-emoji { font-size: 22px; }
+  .card-head-row { display: flex; gap: 12px; align-items: flex-start; }
+  .card-head-row > div { flex: 1; min-width: 0; }
+  .thumb-lg { width: 100%; height: 130px; border-radius: 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; background: #211C2B; }
+  .thumb-lg svg { width: 46%; height: 90%; }
+  .thumb-lg .thumb-emoji { font-size: 56px; }
+  .spin-result { text-align: center; padding: 50px 10px; font-size: 26px; color: #E8C77A; font-family: Georgia, 'Times New Roman', serif; min-height: 90px; }
   .tab-row { display: flex; gap: 8px; margin-bottom: 20px; }
   .tab-btn { flex: 1; font-size: 13px; padding: 10px; border-radius: 10px; border: 1px solid #3A3346; background: transparent; color: #B8AFC7; cursor: pointer; font-family: -apple-system, Helvetica, Arial, sans-serif; }
   .tab-btn.active { border-color: #C9A050; background: rgba(201,160,80,0.12); color: #E8C77A; }
+  body.party-mode h1 { font-size: 56px; line-height: 1.1; }
+  body.party-mode .sub { font-size: 23px; }
+  body.party-mode .eyebrow { font-size: 17px; letter-spacing: 4px; }
+  body.party-mode .tab-btn { font-size: 23px; padding: 22px; }
+  body.party-mode .reset-btn { font-size: 21px; padding: 19px 24px; }
+  body.party-mode .chip { font-size: 23px; padding: 18px 24px; }
+  body.party-mode .cat-label { font-size: 19px; }
+  body.party-mode #search, body.party-mode select, body.party-mode .filter-lbl { font-size: 23px; padding: 16px 16px; }
+  body.party-mode .card { padding: 28px 28px; }
+  body.party-mode .card-head h3 { font-size: 38px; }
+  body.party-mode .status { font-size: 18px; }
+  body.party-mode .tag { font-size: 18px; padding: 8px 16px; }
+  body.party-mode .ing-list li { font-size: 28px; padding: 11px 0; }
+  body.party-mode .ing-qty { font-size: 28px; }
+  body.party-mode .steps { font-size: 28px; line-height: 1.7; }
+  body.party-mode .stars button { font-size: 44px; padding: 10px; }
+  body.party-mode .shared-rating { font-size: 22px; }
+  body.party-mode .sheet-top h2 { font-size: 46px; }
+  body.party-mode .close-btn { font-size: 42px; }
+  body.party-mode .share-btn, body.party-mode .danger-btn { font-size: 21px; padding: 17px 22px; }
+  body.party-mode .fav-chip .fname { font-size: 23px; }
+  body.party-mode .fav-chip .fstars { font-size: 21px; }
+  body.party-mode .field label { font-size: 19px; }
+  body.party-mode .field input, body.party-mode .field select, body.party-mode .field textarea { font-size: 22px; padding: 16px 16px; }
+  body.party-mode .submit-btn { font-size: 22px; padding: 19px 24px; }
+  body.party-mode .lb-name { font-size: 22px; }
+  body.party-mode .lb-top { font-size: 18px; }
+  body.party-mode .lb-count { font-size: 18px; }
+  body.party-mode .toggle-row-label { font-size: 20px; }
+  body.party-mode .toggle-switch { width: 70px; height: 38px; }
+  body.party-mode .toggle-knob { width: 32px; height: 32px; }
+  body.party-mode .toggle-switch.on .toggle-knob { transform: translateX(32px); }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; padding: 10px 14px; border-radius: 10px; border: 1px solid #2A2433; background: #1D1926; }
+  .toggle-row-label { font-size: 13px; color: #B8AFC7; }
+  .toggle-switch { position: relative; width: 50px; height: 28px; border-radius: 999px; background: #3A3346; border: none; cursor: pointer; padding: 0; flex-shrink: 0; transition: background 0.2s; }
+  .toggle-switch.on { background: #C9A050; }
+  .toggle-knob { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #EDE6DA; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .toggle-switch.on .toggle-knob { transform: translateX(22px); }
 </style>
 </head>
 <body>
@@ -107,8 +154,15 @@
 
   <div class="control-row">
     <button class="reset-btn" id="add-btn">+ Cocktail perso</button>
+    <button class="reset-btn" id="wheel-btn">🎲 Roue aléatoire</button>
+    <button class="reset-btn" id="history-btn">Historique de soirée</button>
     <button class="reset-btn" id="leaderboard-btn">Classement amis</button>
     <button class="reset-btn" id="reset-btn">Réinitialiser mon bar</button>
+  </div>
+
+  <div class="toggle-row">
+    <span class="toggle-row-label">🥴 Mode bourré (tout en plus grand)</span>
+    <button class="toggle-switch" id="party-btn" role="switch" aria-checked="false"><span class="toggle-knob"></span></button>
   </div>
 
   <div class="fav-section" id="fav-section" style="display:none">
@@ -138,6 +192,7 @@
     <p class="sub" id="games-count-line"></p>
     <div class="control-row">
       <button class="reset-btn" id="add-game-btn">+ Jeu perso</button>
+      <button class="reset-btn" id="wheel-game-btn">🎲 Roue aléatoire</button>
     </div>
     <div class="chips" id="game-cat-chips"></div>
     <div class="toolbar">
@@ -345,6 +400,13 @@ let filterCategory = "Tous";
 let filterBase = "Tous";
 let formIngredients = [{ name: "", qty: "" }];
 let gameQuery = "";
+let partyMode = localStorage.getItem("mon-bar-party-mode") === "1";
+function applyPartyMode() {
+  document.body.classList.toggle("party-mode", partyMode);
+  const btn = document.getElementById("party-btn");
+  btn.classList.toggle("on", partyMode);
+  btn.setAttribute("aria-checked", partyMode ? "true" : "false");
+}
 let gameFilterCategory = "Tous";
 let customGames = JSON.parse(localStorage.getItem("mon-bar-custom-games") || "[]");
 let sharedCustomGames = [];
@@ -474,6 +536,143 @@ function sharedRatingHtml(name) {
   return `<div class="shared-rating">Note des amis : ${s.avg.toFixed(1)} ★ (${s.count} avis)</div>`;
 }
 
+function glassShape(glass) {
+  const g = (glass || "").toLowerCase();
+  if (g.includes("cocktail") || g.includes("martini")) return "martini";
+  if (g.includes("flûte")) return "flute";
+  if (g.includes("cuivre")) return "mule";
+  if (g.includes("ballon") || g.includes(" vin")) return "wine";
+  if (g.includes("shot")) return "shot";
+  if (g.includes("hurricane")) return "hurricane";
+  if (g.includes("old fashioned")) return "rocks";
+  if (g.includes("irish")) return "mug";
+  return "highball";
+}
+
+function baseColor(base) {
+  const map = {
+    "Vodka": "#9FD8E8", "Gin": "#8FBF7F", "Rhum blanc": "#E8DCC0", "Rhum ambré": "#C9852E",
+    "Tequila": "#E0A84C", "Whisky": "#B5651D", "Cognac": "#A85C2E", "Pastis": "#D8CE8A",
+    "Cachaça": "#E8DCC0", "Pisco": "#E8DCC0", "Applejack (brandy de pomme)": "#C97B3A",
+    "Campari": "#C0392B", "Aperol": "#E8792C", "Vin / champagne": "#E8C77A", "Absinthe": "#7FBF7F",
+    "Multi": "#C9A050", "Sans alcool": "#6FC2C2", "Pimm's No.1": "#B5651D", "Kahlua": "#8A5A3C"
+  };
+  return map[base] || "#C9A050";
+}
+
+function glassSVG(glass, base) {
+  const shape = glassShape(glass);
+  const color = baseColor(base);
+  const stroke = "#6E647F";
+  let inner = "";
+  if (shape === "martini") {
+    inner = `<path d="M20 20 L80 20 L52 55 L52 78" fill="none" stroke="${stroke}" stroke-width="3" stroke-linejoin="round"/><line x1="35" y1="78" x2="69" y2="78" stroke="${stroke}" stroke-width="3"/><path d="M24 22 L76 22 L50 52 Z" fill="${color}" opacity="0.85"/>`;
+  } else if (shape === "flute") {
+    inner = `<path d="M42 15 Q38 55 45 75 L59 75 Q66 55 62 15 Z" fill="none" stroke="${stroke}" stroke-width="3"/><line x1="52" y1="75" x2="52" y2="85" stroke="${stroke}" stroke-width="3"/><line x1="40" y1="85" x2="64" y2="85" stroke="${stroke}" stroke-width="3"/><path d="M44 35 Q42 55 46 74 L58 74 Q62 55 60 35 Z" fill="${color}" opacity="0.85"/>`;
+  } else if (shape === "wine") {
+    inner = `<circle cx="52" cy="42" r="26" fill="none" stroke="${stroke}" stroke-width="3"/><line x1="52" y1="68" x2="52" y2="85" stroke="${stroke}" stroke-width="3"/><line x1="38" y1="85" x2="66" y2="85" stroke="${stroke}" stroke-width="3"/><path d="M28 42 A24 24 0 0 0 76 42 Z" fill="${color}" opacity="0.85"/>`;
+  } else if (shape === "mule") {
+    inner = `<rect x="28" y="18" width="44" height="62" rx="6" fill="none" stroke="${stroke}" stroke-width="3"/><path d="M72 30 q16 8 0 30" fill="none" stroke="${stroke}" stroke-width="3"/><rect x="30" y="34" width="40" height="44" rx="4" fill="${color}" opacity="0.85"/>`;
+  } else if (shape === "shot") {
+    inner = `<path d="M36 20 L68 20 L62 78 L42 78 Z" fill="none" stroke="${stroke}" stroke-width="3"/><path d="M38 38 L66 38 L62 76 L42 76 Z" fill="${color}" opacity="0.85"/>`;
+  } else if (shape === "hurricane") {
+    inner = `<path d="M32 15 Q26 45 38 55 Q26 65 34 85 L70 85 Q78 65 66 55 Q78 45 72 15 Z" fill="none" stroke="${stroke}" stroke-width="3"/><path d="M35 40 Q30 48 38 55 Q30 62 36 82 L68 82 Q74 62 66 55 Q74 48 69 40 Z" fill="${color}" opacity="0.85"/>`;
+  } else if (shape === "rocks") {
+    inner = `<rect x="26" y="30" width="52" height="52" rx="6" fill="none" stroke="${stroke}" stroke-width="3"/><rect x="28" y="48" width="48" height="32" rx="4" fill="${color}" opacity="0.85"/>`;
+  } else if (shape === "mug") {
+    inner = `<rect x="24" y="24" width="46" height="56" rx="4" fill="none" stroke="${stroke}" stroke-width="3"/><path d="M70 34 q18 8 0 30" fill="none" stroke="${stroke}" stroke-width="3"/><rect x="26" y="40" width="42" height="38" fill="${color}" opacity="0.85"/>`;
+  } else {
+    inner = `<rect x="30" y="12" width="40" height="76" rx="5" fill="none" stroke="${stroke}" stroke-width="3"/><rect x="32" y="34" width="36" height="52" rx="3" fill="${color}" opacity="0.85"/>`;
+  }
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+}
+
+function gameEmoji(category) {
+  const map = { "Cartes": "🎴", "Dés": "🎲", "Adresse": "🎯", "Ambiance": "🎉" };
+  return map[category] || "🎲";
+}
+
+let history = JSON.parse(localStorage.getItem("mon-bar-history") || "[]");
+function saveHistory() { localStorage.setItem("mon-bar-history", JSON.stringify(history)); }
+function logHistory(type, name) {
+  history.push({ id: Date.now() + "-" + Math.random().toString(36).slice(2), type, name, timestamp: Date.now() });
+  saveHistory();
+  showToast("Ajouté à l'historique !");
+}
+function historyCount(type, name) {
+  return history.filter(h => h.type === type && h.name === name).length;
+}
+function deleteHistoryEntry(id) {
+  history = history.filter(h => h.id !== id);
+  saveHistory();
+  openHistory();
+}
+function openHistory() {
+  const sheet = document.getElementById("sheet");
+  sheet.dataset.mode = "history";
+  sheet.dataset.current = "";
+  const sorted = [...history].sort((a, b) => b.timestamp - a.timestamp);
+  sheet.innerHTML = `
+    <div class="sheet-top">
+      <h2 class="voice">Historique de soirée</h2>
+      <button class="close-btn" id="close-modal">&times;</button>
+    </div>
+    ${sorted.length === 0
+      ? '<p class="steps">Rien enregistré pour l\'instant. Ouvrez une fiche cocktail ou jeu et appuyez sur le bouton dédié pour commencer votre historique.</p>'
+      : sorted.map(h => `
+        <div class="lb-row">
+          <div>
+            <div class="lb-name">${h.type === "cocktail" ? "🍸" : "🎲"} ${h.name}</div>
+            <div class="lb-top">${new Date(h.timestamp).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</div>
+          </div>
+          <button class="close-btn" style="font-size:18px;" data-del="${h.id}">&times;</button>
+        </div>
+      `).join("")
+    }
+  `;
+  document.getElementById("close-modal").addEventListener("click", closeModal);
+  sheet.querySelectorAll("[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => deleteHistoryEntry(btn.dataset.del));
+  });
+  document.getElementById("overlay").classList.add("open");
+}
+
+function spinWheel(list, kind) {
+  if (!list || list.length === 0) {
+    showToast("Aucun résultat avec ces filtres");
+    return;
+  }
+  const sheet = document.getElementById("sheet");
+  sheet.dataset.mode = "spin";
+  sheet.dataset.current = "";
+  sheet.innerHTML = `
+    <div class="sheet-top">
+      <h2 class="voice">🎲 Roue aléatoire</h2>
+      <button class="close-btn" id="close-modal">&times;</button>
+    </div>
+    <div class="spin-result" id="spin-result">...</div>
+  `;
+  document.getElementById("close-modal").addEventListener("click", closeModal);
+  document.getElementById("overlay").classList.add("open");
+  const resultEl = document.getElementById("spin-result");
+  let i = 0;
+  const totalSpins = 16 + Math.floor(Math.random() * 8);
+  const interval = setInterval(() => {
+    resultEl.textContent = list[Math.floor(Math.random() * list.length)].name;
+    i++;
+    if (i >= totalSpins) {
+      clearInterval(interval);
+      const winner = list[Math.floor(Math.random() * list.length)];
+      resultEl.textContent = "🎉 " + winner.name;
+      setTimeout(() => {
+        if (document.getElementById("overlay").classList.contains("open")) {
+          if (kind === "cocktail") openModal(winner.name); else openGameModal(winner.name);
+        }
+      }, 700);
+    }
+  }, 90);
+}
+
 function renderList() {
   const scored = filteredCocktails();
   const all = allCocktails();
@@ -488,13 +687,19 @@ function renderList() {
   }
   list.innerHTML = scored.map(x => {
     const r = ratings[x.name] || 0;
+    const hCount = historyCount("cocktail", x.name);
     return `
     <div class="card ${x.makeable ? "ready" : ""}" data-open="${x.name}">
-      <div class="card-head">
-        <h3 class="voice">${x.name}</h3>
-        <span class="status ${x.makeable ? "ready" : ""}">${x.makeable ? "Prêt" : x.missing.length === 1 ? "1 ingrédient manquant" : x.missing.length + " ingrédients manquants"}</span>
+      <div class="card-head-row">
+        <div class="thumb">${glassSVG(x.glass, x.base)}</div>
+        <div>
+          <div class="card-head">
+            <h3 class="voice">${x.name}</h3>
+            <span class="status ${x.makeable ? "ready" : ""}">${x.makeable ? "Prêt" : x.missing.length === 1 ? "1 ingrédient manquant" : x.missing.length + " ingrédients manquants"}</span>
+          </div>
+          <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.glass}</span>${x.custom ? '<span class="tag">Fait maison</span>' : ""}${x.addedBy ? `<span class="tag">Par ${x.addedBy}</span>` : ""}${hCount > 0 ? `<span class="tag">Préparé ${hCount}×</span>` : ""}</div>
+        </div>
       </div>
-      <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.glass}</span>${x.custom ? '<span class="tag">Fait maison</span>' : ""}${x.addedBy ? `<span class="tag">Par ${x.addedBy}</span>` : ""}</div>
       <ul class="ing-list">${ingredientListHtml(x)}</ul>
       <div class="steps">${x.steps}</div>
       <div class="stars" data-name="${x.name}">
@@ -535,15 +740,17 @@ function openModal(name) {
   const x = scoredCocktails().find(x => x.name === name);
   if (!x) return;
   const r = ratings[x.name] || 0;
+  const hCount = historyCount("cocktail", x.name);
   const sheet = document.getElementById("sheet");
   sheet.dataset.mode = "cocktail";
   sheet.dataset.current = name;
   sheet.innerHTML = `
+    <div class="thumb-lg">${glassSVG(x.glass, x.base)}</div>
     <div class="sheet-top">
       <h2 class="voice">${x.name}</h2>
       <button class="close-btn" id="close-modal">&times;</button>
     </div>
-    <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.glass}</span><span class="tag">${x.base}</span>${x.custom ? '<span class="tag">Fait maison</span>' : ""}${x.addedBy ? `<span class="tag">Par ${x.addedBy}</span>` : ""}</div>
+    <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.glass}</span><span class="tag">${x.base}</span>${x.custom ? '<span class="tag">Fait maison</span>' : ""}${x.addedBy ? `<span class="tag">Par ${x.addedBy}</span>` : ""}${hCount > 0 ? `<span class="tag">Préparé ${hCount}×</span>` : ""}</div>
     <ul class="ing-list">${ingredientListHtml(x)}</ul>
     <div class="steps">${x.steps}</div>
     <div class="stars" data-name="${x.name}">
@@ -551,12 +758,14 @@ function openModal(name) {
     </div>
     ${sharedRatingHtml(x.name)}
     <div class="sheet-actions">
+      <button class="share-btn" id="log-btn">J'ai préparé celui-ci</button>
       <button class="share-btn" id="share-btn">Partager la recette</button>
       ${x.custom ? '<button class="danger-btn" id="delete-btn">Supprimer</button>' : ""}
     </div>
   `;
   document.getElementById("close-modal").addEventListener("click", closeModal);
   document.getElementById("share-btn").addEventListener("click", () => shareCocktail(x));
+  document.getElementById("log-btn").addEventListener("click", () => { logHistory("cocktail", x.name); openModal(x.name); });
   const deleteBtn = document.getElementById("delete-btn");
   if (deleteBtn) deleteBtn.addEventListener("click", () => deleteCustomCocktail(x.name));
   document.querySelectorAll("#sheet .stars button").forEach(btn => {
@@ -767,7 +976,14 @@ async function shareCocktail(x) {
 document.getElementById("search").addEventListener("input", (e) => { query = e.target.value; renderList(); });
 document.getElementById("only-makeable").addEventListener("change", (e) => { onlyMakeable = e.target.checked; renderList(); });
 document.getElementById("add-btn").addEventListener("click", openAddCocktailForm);
+document.getElementById("party-btn").addEventListener("click", () => {
+  partyMode = !partyMode;
+  localStorage.setItem("mon-bar-party-mode", partyMode ? "1" : "0");
+  applyPartyMode();
+});
 document.getElementById("leaderboard-btn").addEventListener("click", openLeaderboard);
+document.getElementById("history-btn").addEventListener("click", openHistory);
+document.getElementById("wheel-btn").addEventListener("click", () => spinWheel(filteredCocktails(), "cocktail"));
 document.getElementById("reset-btn").addEventListener("click", () => {
   if (confirm("Décocher tous les ingrédients de votre bar ?")) {
     owned = new Set();
@@ -804,13 +1020,21 @@ function renderGamesList() {
     el.innerHTML = `<div class="empty">Aucun jeu ne correspond.</div>`;
     return;
   }
-  el.innerHTML = list.map(x => `
+  el.innerHTML = list.map(x => {
+    const hCount = historyCount("jeu", x.name);
+    return `
     <div class="card" data-open-game="${x.name}">
-      <div class="card-head"><h3 class="voice">${x.name}</h3></div>
-      <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.players}</span>${x.custom ? '<span class="tag">Fait maison</span>' : ""}${x.addedBy ? `<span class="tag">Par ${x.addedBy}</span>` : ""}</div>
+      <div class="card-head-row">
+        <div class="thumb"><span class="thumb-emoji">${gameEmoji(x.category)}</span></div>
+        <div>
+          <div class="card-head"><h3 class="voice">${x.name}</h3></div>
+          <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.players}</span>${x.custom ? '<span class="tag">Fait maison</span>' : ""}${x.addedBy ? `<span class="tag">Par ${x.addedBy}</span>` : ""}${hCount > 0 ? `<span class="tag">Joué ${hCount}×</span>` : ""}</div>
+        </div>
+      </div>
       <div class="steps">${x.items.length} objet${x.items.length !== 1 ? "s" : ""} requis${x.items.length === 0 ? " (aucun matériel)" : ""}</div>
     </div>
-  `).join("");
+  `;
+  }).join("");
   el.querySelectorAll("[data-open-game]").forEach(card => {
     card.addEventListener("click", () => openGameModal(card.dataset.openGame));
   });
@@ -819,26 +1043,30 @@ function renderGamesList() {
 function openGameModal(name) {
   const x = allGames().find(x => x.name === name);
   if (!x) return;
+  const hCount = historyCount("jeu", x.name);
   const sheet = document.getElementById("sheet");
   sheet.dataset.mode = "game";
   sheet.dataset.current = name;
   sheet.innerHTML = `
+    <div class="thumb-lg"><span class="thumb-emoji">${gameEmoji(x.category)}</span></div>
     <div class="sheet-top">
       <h2 class="voice">${x.name}</h2>
       <button class="close-btn" id="close-modal">&times;</button>
     </div>
-    <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.players}</span>${x.custom ? '<span class="tag">Fait maison</span>' : ""}${x.addedBy ? `<span class="tag">Par ${x.addedBy}</span>` : ""}</div>
+    <div class="tag-row"><span class="tag">${x.category}</span><span class="tag">${x.players}</span>${x.custom ? '<span class="tag">Fait maison</span>' : ""}${x.addedBy ? `<span class="tag">Par ${x.addedBy}</span>` : ""}${hCount > 0 ? `<span class="tag">Joué ${hCount}×</span>` : ""}</div>
     <div class="cat-label">Objets requis</div>
     <ul class="ing-list">${x.items.length ? x.items.map(i => `<li><span class="ing-name"><span class="dot"></span>${i}</span></li>`).join("") : "<li>Aucun matériel particulier</li>"}</ul>
     <div class="cat-label">Fonctionnement du jeu</div>
     <div class="steps">${x.rules}</div>
     <div class="sheet-actions">
+      <button class="share-btn" id="log-game-btn">On a joué à celui-ci</button>
       <button class="share-btn" id="share-btn">Partager le jeu</button>
       ${x.custom ? '<button class="danger-btn" id="delete-game-btn">Supprimer</button>' : ""}
     </div>
   `;
   document.getElementById("close-modal").addEventListener("click", closeModal);
   document.getElementById("share-btn").addEventListener("click", () => shareGame(x));
+  document.getElementById("log-game-btn").addEventListener("click", () => { logHistory("jeu", x.name); openGameModal(x.name); });
   const deleteBtn = document.getElementById("delete-game-btn");
   if (deleteBtn) deleteBtn.addEventListener("click", () => deleteCustomGame(x.name));
   document.getElementById("overlay").classList.add("open");
@@ -981,6 +1209,7 @@ document.getElementById("tab-cocktails").addEventListener("click", () => showVie
 document.getElementById("tab-games").addEventListener("click", () => showView("games"));
 document.getElementById("game-search").addEventListener("input", (e) => { gameQuery = e.target.value; renderGamesList(); });
 document.getElementById("add-game-btn").addEventListener("click", openAddGameForm);
+document.getElementById("wheel-game-btn").addEventListener("click", () => spinWheel(filteredGames(), "game"));
 
 renderCategories();
 renderFilters();
@@ -988,6 +1217,7 @@ renderFavorites();
 renderList();
 renderGameFilters();
 renderGamesList();
+applyPartyMode();
 
 const initParams = new URL(window.location.href).searchParams;
 const initialCocktail = initParams.get("cocktail");
