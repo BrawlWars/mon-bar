@@ -1,4 +1,4 @@
-const CACHE_NAME = "mon-bar-v12";
+const CACHE_NAME = "mon-bar-v18";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-180.png", "./icon-512.png"];
 
 self.addEventListener("install", (event) => {
