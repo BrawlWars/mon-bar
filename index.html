@@ -72,10 +72,13 @@
   .field label { display: block; font-size: 12px; color: #9C93A8; margin-bottom: 5px; }
   .field input, .field select, .field textarea { width: 100%; font-size: 14px; padding: 9px 10px; border-radius: 8px; border: 1px solid #3A3346; background: #211C2B; color: #EDE6DA; outline: none; font-family: -apple-system, Helvetica, Arial, sans-serif; }
   .field textarea { min-height: 70px; resize: vertical; }
-  .ing-row { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
-  .ing-row input { flex: 1; font-size: 13px; padding: 8px 9px; border-radius: 7px; border: 1px solid #3A3346; background: #211C2B; color: #EDE6DA; outline: none; }
-  .ing-row input.cf-ing-qty { flex: 0 0 90px; }
-  .ing-row button { background: none; border: none; color: #6E647F; font-size: 20px; cursor: pointer; padding: 0 4px; }
+  .ing-row { margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #241F2E; }
+  .ing-row-top { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .ing-row-top input { flex: 1; font-size: 13px; padding: 8px 9px; border-radius: 7px; border: 1px solid #3A3346; background: #211C2B; color: #EDE6DA; outline: none; }
+  .ing-row-top button { background: none; border: none; color: #6E647F; font-size: 20px; cursor: pointer; padding: 0 4px; }
+  .ing-row-bottom { display: flex; gap: 6px; }
+  .ing-row-bottom input.cf-ing-qty { flex: 0 0 90px; font-size: 13px; padding: 8px 9px; border-radius: 7px; border: 1px solid #3A3346; background: #211C2B; color: #EDE6DA; outline: none; }
+  .ing-row-bottom select.cf-ing-cat { flex: 1; font-size: 12px; padding: 8px 9px; border-radius: 7px; border: 1px solid #3A3346; background: #211C2B; color: #B8AFC7; }
   .add-row-btn { font-size: 12px; padding: 7px 10px; border-radius: 7px; border: 1px dashed #3A3346; background: transparent; color: #9C93A8; cursor: pointer; margin-bottom: 14px; }
   .submit-btn { font-size: 14px; padding: 11px 16px; border-radius: 8px; border: none; background: #C9A050; color: #17141C; font-weight: bold; cursor: pointer; width: 100%; }
   .danger-btn { font-size: 13px; padding: 9px 14px; border-radius: 8px; border: 1px solid #5A2E2E; background: transparent; color: #D68989; cursor: pointer; }
@@ -84,11 +87,19 @@
   .lb-name { font-size: 14px; color: #EDE6DA; }
   .lb-top { font-size: 12px; color: #8D839E; margin-top: 2px; }
   .lb-count { font-size: 12px; color: #C9A050; white-space: nowrap; }
-  .thumb { width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: transparent; overflow: hidden; }
-  .thumb svg { width: 100%; height: 100%; }
+  .thumb { width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: transparent; overflow: hidden; }
+  .thumb svg { width: 70%; height: 70%; }
   .thumb-emoji { font-size: 16px; }
-  .card-head-row { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 2px; align-items: start; }
-  .card-head-row > div { min-width: 0; }
+  .card-head-row {
+   display: grid;
+   grid-template-columns: 28px minmax(0, 1fr);
+   column-gap: 2px;
+   align-items: start;
+  }
+
+  .card-head-row > div {
+   min-width: 0;
+  }
   .thumb-xl { width: 60px; height: 60px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: transparent; }
   .thumb-xl svg { width: 72%; height: 72%; }
   .thumb-xl .thumb-emoji { font-size: 30px; }
@@ -423,13 +434,43 @@ let formGameItems = [""];
 function allGames() { return FIREBASE_ENABLED ? [...GAMES, ...sharedCustomGames] : [...GAMES, ...customGames]; }
 
 function allCocktails() { return FIREBASE_ENABLED ? [...COCKTAILS, ...sharedCustomCocktails] : [...COCKTAILS, ...customCocktails]; }
+
+function normKey(s) { return (s || "").trim().toLowerCase(); }
+
+function isOwned(name) {
+  const key = normKey(name);
+  for (const o of owned) { if (normKey(o) === key) return true; }
+  return false;
+}
+
+function extraIngredientsByCategory() {
+  const known = new Set(CATEGORIES.flatMap(c => c.items).map(normKey));
+  const validCats = new Set(CATEGORIES.map(c => c.name));
+  const seen = new Map();
+  allCocktails().filter(x => x.custom).forEach(x => {
+    x.ingredients.forEach(i => {
+      const key = normKey(i.name);
+      if (!known.has(key) && !seen.has(key)) {
+        seen.set(key, { name: i.name.trim(), cat: validCats.has(i.cat) ? i.cat : "Mixers & jus" });
+      }
+    });
+  });
+  const result = {};
+  CATEGORIES.forEach(c => { result[c.name] = []; });
+  Array.from(seen.values()).forEach(v => { result[v.cat].push(v.name); });
+  Object.keys(result).forEach(k => result[k].sort((a, b) => a.localeCompare(b)));
+  return result;
+}
 function extraIngredients() {
-  const known = new Set(CATEGORIES.flatMap(c => c.items));
-  return Array.from(new Set(allCocktails().filter(x => x.custom).flatMap(x => x.ingredients.map(i => i.name))))
-    .filter(n => !known.has(n))
-    .sort((a, b) => a.localeCompare(b));
+  return Object.values(extraIngredientsByCategory()).flat().sort((a, b) => a.localeCompare(b));
 }
 function allKnownIngredients() { return [...CATEGORIES.flatMap(cat => cat.items), ...extraIngredients()]; }
+
+function canonicalIngredientName(typed) {
+  const key = normKey(typed);
+  const match = allKnownIngredients().find(n => normKey(n) === key);
+  return match || typed.trim();
+}
 
 function save() {
   localStorage.setItem("mon-bar-inventory", JSON.stringify([...owned]));
@@ -449,28 +490,23 @@ function showToast(msg) {
 
 function renderCategories() {
   const el = document.getElementById("categories");
-  let html = CATEGORIES.map(cat => `
+  const extraByCat = extraIngredientsByCategory();
+  let html = CATEGORIES.map(cat => {
+    const items = [...cat.items, ...extraByCat[cat.name]];
+    return `
     <div class="cat-label">${cat.name}</div>
     <div class="chips">
-      ${cat.items.map(item => `<button class="chip ${owned.has(item) ? "on" : ""}" data-item="${item}">${owned.has(item) ? "✓ " : ""}${item}</button>`).join("")}
+      ${items.map(item => `<button class="chip ${isOwned(item) ? "on" : ""}" data-item="${item}">${isOwned(item) ? "✓ " : ""}${item}</button>`).join("")}
     </div>
-  `).join("");
-  const extra = extraIngredients();
-  if (extra.length) {
-    html += `
-      <div class="cat-label">Autres (perso)</div>
-      <div class="chips">
-        ${extra.map(item => `<button class="chip ${owned.has(item) ? "on" : ""}" data-item="${item}">${owned.has(item) ? "✓ " : ""}${item}</button>`).join("")}
-      </div>
-    `;
-  }
+  `;
+  }).join("");
   el.innerHTML = html;
   document.getElementById("ingredient-options").innerHTML =
     allKnownIngredients().map(i => `<option value="${i}"></option>`).join("");
   el.querySelectorAll(".chip").forEach(btn => {
     btn.addEventListener("click", () => {
       const item = btn.dataset.item;
-      owned.has(item) ? owned.delete(item) : owned.add(item);
+      isOwned(item) ? owned.delete([...owned].find(o => normKey(o) === normKey(item))) : owned.add(item);
       save();
       renderCategories();
       renderList();
@@ -481,7 +517,7 @@ function renderCategories() {
 
 function scoredCocktails() {
   return allCocktails().map(x => {
-    const missing = x.ingredients.filter(i => !owned.has(i.name));
+    const missing = x.ingredients.filter(i => !isOwned(i.name));
     return { ...x, missing, makeable: missing.length === 0 };
   });
 }
@@ -530,7 +566,7 @@ function renderFavorites() {
 
 function ingredientListHtml(x) {
   return x.ingredients.map(i => {
-    const isMissing = !owned.has(i.name);
+    const isMissing = !isOwned(i.name);
     return `<li class="${isMissing ? "miss" : ""}">
       <span class="ing-name"><span class="dot ${isMissing ? "off" : ""}"></span>${i.name}</span>
       <span class="ing-qty">${i.qty}</span>
@@ -720,7 +756,7 @@ function spinWheel(list, kind) {
 function renderList() {
   const scored = filteredCocktails();
   const all = allCocktails();
-  const makeableCount = all.filter(x => x.ingredients.every(i => owned.has(i.name))).length;
+  const makeableCount = all.filter(x => x.ingredients.every(i => isOwned(i.name))).length;
   document.getElementById("count-line").textContent =
     `${makeableCount} cocktail${makeableCount !== 1 ? "s" : ""} réalisable${makeableCount !== 1 ? "s" : ""} sur ${all.length}, avec votre bar actuel`;
 
@@ -871,7 +907,7 @@ function closeModal() {
 }
 
 function openAddCocktailForm() {
-  formIngredients = [{ name: "", qty: "" }];
+  formIngredients = [{ name: "", qty: "", cat: "Mixers & jus" }];
   const sheet = document.getElementById("sheet");
   sheet.dataset.mode = "add-form";
   sheet.dataset.current = "";
@@ -896,6 +932,7 @@ function openAddCocktailForm() {
     </div>
     <div class="field">
       <label>Ingrédients</label>
+      <p style="font-family:-apple-system,Helvetica,Arial,sans-serif;font-size:12px;color:#8D839E;margin:0 0 10px;">Pour un nouvel ingrédient, choisis aussi dans quel rayon il doit apparaître.</p>
       <div id="cf-ingredients"></div>
       <button class="add-row-btn" id="cf-add-row">+ Ajouter un ingrédient</button>
     </div>
@@ -907,7 +944,7 @@ function openAddCocktailForm() {
   `;
   document.getElementById("close-modal").addEventListener("click", closeModal);
   document.getElementById("cf-add-row").addEventListener("click", () => {
-    formIngredients.push({ name: "", qty: "" });
+    formIngredients.push({ name: "", qty: "", cat: "Mixers & jus" });
     renderFormIngredientRows();
   });
   document.getElementById("cf-submit").addEventListener("click", submitCustomCocktail);
@@ -920,18 +957,26 @@ function renderFormIngredientRows() {
   if (!container) return;
   container.innerHTML = formIngredients.map((row, idx) => `
     <div class="ing-row" data-idx="${idx}">
-      <input class="cf-ing-name" list="ingredient-options" placeholder="Ingrédient" value="${(row.name || "").replace(/"/g, "&quot;")}">
-      <input class="cf-ing-qty" placeholder="Quantité" value="${(row.qty || "").replace(/"/g, "&quot;")}">
-      <button class="cf-ing-remove" title="Retirer">&times;</button>
+      <div class="ing-row-top">
+        <input class="cf-ing-name" list="ingredient-options" placeholder="Ingrédient" value="${(row.name || "").replace(/"/g, "&quot;")}">
+        <button class="cf-ing-remove" title="Retirer">&times;</button>
+      </div>
+      <div class="ing-row-bottom">
+        <input class="cf-ing-qty" placeholder="Quantité" value="${(row.qty || "").replace(/"/g, "&quot;")}">
+        <select class="cf-ing-cat">
+          ${CATEGORIES.map(c => `<option value="${c.name}" ${row.cat === c.name ? "selected" : ""}>${c.name}</option>`).join("")}
+        </select>
+      </div>
     </div>
   `).join("");
   container.querySelectorAll(".ing-row").forEach(rowEl => {
     const idx = parseInt(rowEl.dataset.idx, 10);
     rowEl.querySelector(".cf-ing-name").addEventListener("input", e => { formIngredients[idx].name = e.target.value; });
     rowEl.querySelector(".cf-ing-qty").addEventListener("input", e => { formIngredients[idx].qty = e.target.value; });
+    rowEl.querySelector(".cf-ing-cat").addEventListener("change", e => { formIngredients[idx].cat = e.target.value; });
     rowEl.querySelector(".cf-ing-remove").addEventListener("click", () => {
       formIngredients.splice(idx, 1);
-      if (formIngredients.length === 0) formIngredients.push({ name: "", qty: "" });
+      if (formIngredients.length === 0) formIngredients.push({ name: "", qty: "", cat: "Mixers & jus" });
       renderFormIngredientRows();
     });
   });
@@ -944,7 +989,7 @@ function submitCustomCocktail() {
   const steps = document.getElementById("cf-steps").value.trim() || "Mélanger les ingrédients selon vos goûts.";
   const ingredients = formIngredients
     .filter(i => (i.name || "").trim())
-    .map(i => ({ name: i.name.trim(), qty: (i.qty || "").trim() || "—" }));
+    .map(i => ({ name: canonicalIngredientName(i.name), qty: (i.qty || "").trim() || "—", cat: i.cat || "Mixers & jus" }));
 
   if (!name || ingredients.length === 0) {
     showToast("Nom et au moins un ingrédient requis");
